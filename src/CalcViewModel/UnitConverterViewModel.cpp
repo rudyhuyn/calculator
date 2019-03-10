@@ -54,6 +54,9 @@ constexpr size_t SELECTED_TARGET_UNIT = 2;
 // x millisecond delay before we consider conversion to be final
 constexpr unsigned int CONVERSION_FINALIZED_DELAY_IN_MS = 1000;
 
+const wregex regexTrimSpacesEnd = wregex(L"\\s+$");
+
+
 namespace CalculatorApp::ViewModel
 {
     namespace UnitConverterViewModelProperties
@@ -142,7 +145,7 @@ UnitConverterViewModel::UnitConverterViewModel(const shared_ptr<UCM::IUnitConver
     m_currencyFormatter->Mode = CurrencyFormatterMode::UseCurrencyCode;
     m_currencyFormatter->ApplyRoundingForCurrency(RoundingAlgorithm::RoundHalfDown);
     m_currencyMaxFractionDigits = m_currencyFormatter->FractionDigits;
-    
+
     auto resourceLoader = AppResourceProvider::GetInstance();
     m_localizedValueFromFormat = resourceLoader.GetResourceString(UnitConverterResourceKeys::ValueFromFormat);
     m_localizedValueToFormat = resourceLoader.GetResourceString(UnitConverterResourceKeys::ValueToFormat);
@@ -279,7 +282,7 @@ void UnitConverterViewModel::OnSwitchActive(Platform::Object^ unused)
 
     m_valueFromUnlocalized.swap(m_valueToUnlocalized);
     Utils::Swap(&m_localizedValueFromFormat, &m_localizedValueToFormat);
-    
+
     Utils::Swap(&m_Unit1AutomationName, &m_Unit2AutomationName);
     RaisePropertyChanged(UnitConverterViewModelProperties::Unit1AutomationName);
     RaisePropertyChanged(UnitConverterViewModelProperties::Unit2AutomationName);
@@ -341,17 +344,17 @@ String^ UnitConverterViewModel::ConvertToLocalizedString(const std::wstring& str
         {
             wstring currencyResult = m_currencyFormatter->Format(stod(stringToLocalize))->Data();
             wstring currencyCode = m_currencyFormatter->Currency->Data();
-            
+
             // CurrencyFormatter always includes LangCode or Symbol. Make it include LangCode
             // because this includes a non-breaking space. Remove the LangCode.
             auto pos = currencyResult.find(currencyCode);
             if (pos != wstring::npos)
             {
                 currencyResult.erase(pos, currencyCode.length());
-                pos = currencyResult.find(L'\u00a0'); // non-breaking space
-                if (pos != wstring::npos)
+                std::wsmatch sm;
+                if (regex_search(currencyResult, sm, regexTrimSpacesEnd))
                 {
-                    currencyResult.erase(pos, 1);
+                    currencyResult.erase(sm.prefix().length(), sm.length());
                 }
             }
 
@@ -378,7 +381,7 @@ String^ UnitConverterViewModel::ConvertToLocalizedString(const std::wstring& str
             {
                 resultWithDecimal.replace(pos, 1, &m_decimalSeparator);
             }
-            
+
             // Copy back the edited string to the result
             result = ref new String(resultWithDecimal.c_str());
         }
@@ -831,8 +834,8 @@ void UnitConverterViewModel::RefreshSupplementaryResults()
     {
         SupplementaryResult^ result =
             ref new SupplementaryResult(
-            this->ConvertToLocalizedString(get<0>(suggestedValue), false),
-            ref new Unit(get<1>(suggestedValue)));
+                this->ConvertToLocalizedString(get<0>(suggestedValue), false),
+                ref new Unit(get<1>(suggestedValue)));
         if (result->IsWhimsical())
         {
             whimsicals.push_back(result);
