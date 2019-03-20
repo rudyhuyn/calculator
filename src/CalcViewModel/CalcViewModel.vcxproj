@@ -322,6 +322,14 @@
     <ClInclude Include="DataLoaders\UnitConverterDataConstants.h" />
     <ClInclude Include="DataLoaders\UnitConverterDataLoader.h" />
     <ClInclude Include="DateCalculatorViewModel.h" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\BisonParser.hpp" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\location.hh" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\position.hh" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\stack.hh" />
+    <ClInclude Include="ExpressionParser\BisonParserParam.h" />
+    <ClInclude Include="ExpressionParser\KeyChained.h" />
+    <ClInclude Include="ExpressionParser\Lexer.h" />
+    <ClInclude Include="ExpressionParser\Parser.h" />
     <ClInclude Include="GraphingCalculatorEnums.h" />
     <ClInclude Include="GraphingCalculator\EquationViewModel.h" />
     <ClInclude Include="GraphingCalculator\GraphingCalculatorViewModel.h" />
@@ -359,6 +367,10 @@
     <ClCompile Include="GraphingCalculator\EquationViewModel.cpp" />
     <ClCompile Include="GraphingCalculator\GraphingCalculatorViewModel.cpp" />
     <ClCompile Include="GraphingCalculator\GraphingSettingsViewModel.cpp" />
+    <ClCompile Include="ExpressionParser\BisonGeneratedFiles\BisonParser.cpp" />
+    <ClCompile Include="ExpressionParser\BisonParserParam.cpp" />
+    <ClCompile Include="ExpressionParser\Lexer.cpp" />
+    <ClCompile Include="ExpressionParser\Parser.cpp" />
     <ClCompile Include="HistoryItemViewModel.cpp" />
     <ClCompile Include="HistoryViewModel.cpp" />
     <ClCompile Include="MemoryItemViewModel.cpp" />
@@ -405,6 +417,8 @@
   </Choose>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json" />
+    <None Include="ExpressionParser\BisonParser.y" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -86,6 +86,10 @@
     <ClCompile Include="GraphingCalculator\GraphingSettingsViewModel.cpp">
       <Filter>GraphingCalculator</Filter>
     </ClCompile>
+    <ClCompile Include="ExpressionParser\BisonGeneratedFiles\BisonParser.cpp" />
+    <ClCompile Include="ExpressionParser\BisonParserParam.cpp" />
+    <ClCompile Include="ExpressionParser\Lexer.cpp" />
+    <ClCompile Include="ExpressionParser\Parser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -199,6 +203,14 @@
     <ClInclude Include="Common\DelegateCommand.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\BisonParser.hpp" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\location.hh" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\position.hh" />
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\stack.hh" />
+    <ClInclude Include="ExpressionParser\BisonParserParam.h" />
+    <ClInclude Include="ExpressionParser\KeyChained.h" />
+    <ClInclude Include="ExpressionParser\Lexer.h" />
+    <ClInclude Include="ExpressionParser\Parser.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json">
@@ -207,5 +219,7 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="$(MSBuildThisFileDirectory)DensityStyles\Compact.xaml" />
+    <None Include="packages.config" />
+    <None Include="ExpressionParser\BisonParser.y" />
   </ItemGroup>
 </Project>
