@@ -8,9 +8,9 @@ using namespace CalculatorApp::Common;
 
 #define yytokentype yy::Parser::token
 
-std::wregex regexNumberDec(L"\\d+");
-std::wregex regexNumberOcto(L"[0-7]");
-std::wregex regexNumberHexa(L"[0-9A-F]");
+std::wregex regexNumberDec(L"[0-9]+");
+std::wregex regexNumberOcto(L"[0-7]+");
+std::wregex regexNumberHexa(L"[0-9a-fA-F]+");
 std::wregex regexNumberBin(L"[01]+");
 
 vector<LexInfo *> const lexemeRulesBase(
@@ -18,7 +18,9 @@ vector<LexInfo *> const lexemeRulesBase(
         new LexInfoChar(yytokentype::PLUS, L'+'),
         new LexInfoChar(yytokentype::MINUS, L'-'),
         new LexInfoChar(yytokentype::DIVIDE, L'/'),
+        new LexInfoChar(yytokentype::DIVIDE, 247 /* ÷ */),
         new LexInfoChar(yytokentype::MULTIPLY, L'*'),
+        new LexInfoChar(yytokentype::MULTIPLY, 215/*'×'*/),
         new LexInfoRegex(yytokentype::SPACE, L"\\s+"),
         new LexInfoChar(yytokentype::EQU, L'='),
     });
@@ -26,7 +28,9 @@ vector<LexInfo *> const lexemeRulesBase(
 vector<LexInfo *> const lexemeRulesNormal(
     {
         new LexInfoChar(yytokentype::POWER2, 253),
-        new LexInfoChar(yytokentype::POWER2, 254),
+        new LexInfoChar(yytokentype::POWER3, 254),
+        new LexInfoChar(yytokentype::POWER2, 178),
+        new LexInfoChar(yytokentype::POWER3, 179),
     });
 
 vector<LexInfo *> const lexemeRulesProg(
@@ -81,6 +85,7 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
     *keys = nullptr;
     wsmatch match;
 
+
     wchar_t decimalSeparatorChar = decimalSeparator[0];
     wchar_t digitGroupingChar = thousandSeparator[0];
     std::wregex regNumberToUse;
@@ -88,7 +93,8 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
     {
     case ViewMode::Standard:
     {
-        std::wregex regexNumberDecimal((L"(?:\\d+|(?:\\d*(?:\\" + decimalSeparatorChar + L"\\d+)))")->Data());
+        // Use [0-9] instead of \d because \d matches also square and cube signs
+        std::wregex regexNumberDecimal((L"(?:[0-9]+|(?:[0-9]*(?:\\" + decimalSeparatorChar + L"[0-9]+)))")->Data());
         regNumberToUse = regexNumberDecimal;
         break;
     }
@@ -96,11 +102,11 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
     {
         std::wregex regexNumberDecimalExtended((
             L"("
-            "(\\d{0,3}(?:\\" + digitGroupingChar + L"\\d{3})+(\\" + decimalSeparatorChar + L"\\d+)?)|"
-            "(\\d*\\" + decimalSeparatorChar + L"\\d+)|"
-            "(\\d+\\" + decimalSeparatorChar + L"?)"
+            "([0-9]{0,3}(?:\\" + digitGroupingChar + L"[0-9]{3})+(\\" + decimalSeparatorChar + L"[0-9]+)?)|"
+            "([0-9]*\\" + decimalSeparatorChar + L"[0-9]+)|"
+            "([0-9]+\\" + decimalSeparatorChar + L"?)"
             ")"
-            "(e[+-]?\\d+)?")->Data());
+            "(e[+-]?[0-9]+)?")->Data());
         regNumberToUse = regexNumberDecimalExtended;
     }
     break;
@@ -145,7 +151,7 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
                 (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Decimal);
                 continue;
             }
-            switch (c)
+            switch (tolower(c))
             {
             case '0':
                 (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Zero);
@@ -177,8 +183,30 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
             case '9':
                 (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Nine);
                 break;
+            case 'a':
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::A);
+                break;
+            case 'b':
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::B);
+                break;
+            case 'c':
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::C);
+                break;
+            case 'd':
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::D);
+                break;
+            case 'f':
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::F);
+                break;
             case 'e':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Exp);
+                if (mode == ViewMode::Programmer)
+                {
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::E);
+                }
+                else
+                {
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Exp);
+                }
                 break;
             case '-':
                 (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Negate);
