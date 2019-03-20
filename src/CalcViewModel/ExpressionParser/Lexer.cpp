@@ -8,10 +8,7 @@ using namespace CalculatorApp::Common;
 
 #define yytokentype yy::Parser::token
 
-std::wregex regexNumberDec(L"[0-9]+");
-std::wregex regexNumberOcto(L"[0-7]+");
-std::wregex regexNumberHexa(L"[0-9a-fA-F]+");
-std::wregex regexNumberBin(L"[01]+");
+static const wstring c_uIntSuffixes = L"[uU]?[lL]{0,2}";
 
 vector<LexInfo *> const lexemeRulesBase(
     {
@@ -88,14 +85,15 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
 
     wchar_t decimalSeparatorChar = decimalSeparator[0];
     wchar_t digitGroupingChar = thousandSeparator[0];
-    std::wregex regNumberToUse;
+    wstring prefixToIgnore = L"";
+    vector<wregex> regNumberToUse;
     switch (mode)
     {
     case ViewMode::Standard:
     {
         // Use [0-9] instead of \d because \d matches also square and cube signs
         std::wregex regexNumberDecimal((L"(?:[0-9]+|(?:[0-9]*(?:\\" + decimalSeparatorChar + L"[0-9]+)))")->Data());
-        regNumberToUse = regexNumberDecimal;
+        regNumberToUse.push_back(regexNumberDecimal);
         break;
     }
     case ViewMode::Scientific:
@@ -107,115 +105,134 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
             "([0-9]+\\" + decimalSeparatorChar + L"?)"
             ")"
             "(e[+-]?[0-9]+)?")->Data());
-        regNumberToUse = regexNumberDecimalExtended;
+        regNumberToUse.push_back(regexNumberDecimalExtended);
     }
-    break;
-    default:
+    case ViewMode::Programmer:
     {
         switch (base)
         {
         case 10:
         {
-            regNumberToUse = regexNumberDec;
+            // Decimal numbers like -145, 145, 0n145, 123ull etc
+            wstring decProgrammerChars = L"[0-9]+((_|'|`)[0-9]+)*";
+            regNumberToUse.push_back(wregex(L"[-+]?" + decProgrammerChars + c_uIntSuffixes));
+            regNumberToUse.push_back(wregex(L"(0[nN])?" + decProgrammerChars));
             break;
         }
         case 16:
         {
-            regNumberToUse = regexNumberHexa;
+            // Hex numbers like 5F, 4A0C, 0xa9, 0xFFull, 47CDh
+            wstring hexaProgrammersChars = L"[0-9a-fA-F]+((_|'|`)[0-9a-fA-F]+)*";
+            regNumberToUse.push_back(wregex(hexaProgrammersChars + L"[hH]?"));
+            regNumberToUse.push_back(wregex(L"(0[xX])?" + hexaProgrammersChars + c_uIntSuffixes));
             break;
         }
         case 8:
         {
-            regNumberToUse = regexNumberOcto;
+            // Octal numbers like 06, 010, 0t77, 0o77, 077ull etc
+            wstring octoProgrammersChars = L"[0-7]+((_|'|`)[0-7]+)*";
+            regNumberToUse.push_back(wregex(L"(0[otOT])?" + octoProgrammersChars + c_uIntSuffixes));
             break;
         }
         case 2:
         {
-            regNumberToUse = regexNumberBin;
+            // Binary numbers like 011010110, 0010110, 10101001, 1001b, 0b1001, 0y1001, 0b1001ull
+            wstring binProgrammersChars = L"[0-1]+((_|'|`)[0-1]+)*";
+            regNumberToUse.push_back(wregex(L"(0[byBY])?" + binProgrammersChars + c_uIntSuffixes));
+            regNumberToUse.push_back(wregex(binProgrammersChars + L"[bB]?"));
             break;
         }
         }
+        break;
     }
-    }
-
-    if (regex_search(begin, end, match, regNumberToUse, regex_constants::match_continuous))
+    default:
     {
-        *keys = new std::vector<CalculatorApp::NumbersAndOperatorsEnum>();
-        std::wstring numberFound = match.str();
-        for (auto&c : numberFound)
+        regNumberToUse.push_back(wregex(L"[0-9]+"));
+        break;
+    }
+    }
+
+    for (auto & regNumber : regNumberToUse)
+    {
+        if (regex_search(begin, end, match, regNumber, regex_constants::match_continuous))
         {
-            if (c == digitGroupingChar)
-                continue;
-            if (c == decimalSeparatorChar)
+            *keys = new std::vector<CalculatorApp::NumbersAndOperatorsEnum>();
+            std::wstring numberFound = match.str();
+            for (auto&c : numberFound)
             {
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Decimal);
-                continue;
-            }
-            switch (tolower(c))
-            {
-            case '0':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Zero);
-                break;
-            case '1':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::One);
-                break;
-            case '2':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Two);
-                break;
-            case '3':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Three);
-                break;
-            case '4':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Four);
-                break;
-            case '5':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Five);
-                break;
-            case '6':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Six);
-                break;
-            case '7':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Seven);
-                break;
-            case '8':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Eight);
-                break;
-            case '9':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Nine);
-                break;
-            case 'a':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::A);
-                break;
-            case 'b':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::B);
-                break;
-            case 'c':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::C);
-                break;
-            case 'd':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::D);
-                break;
-            case 'f':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::F);
-                break;
-            case 'e':
-                if (mode == ViewMode::Programmer)
+                if (c == digitGroupingChar)
+                    continue;
+                if (c == decimalSeparatorChar)
                 {
-                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::E);
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Decimal);
+                    continue;
                 }
-                else
+                switch (tolower(c))
                 {
-                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Exp);
+                case '0':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Zero);
+                    break;
+                case '1':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::One);
+                    break;
+                case '2':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Two);
+                    break;
+                case '3':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Three);
+                    break;
+                case '4':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Four);
+                    break;
+                case '5':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Five);
+                    break;
+                case '6':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Six);
+                    break;
+                case '7':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Seven);
+                    break;
+                case '8':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Eight);
+                    break;
+                case '9':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Nine);
+                    break;
+                case 'a':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::A);
+                    break;
+                case 'b':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::B);
+                    break;
+                case 'c':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::C);
+                    break;
+                case 'd':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::D);
+                    break;
+                case 'f':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::F);
+                    break;
+                case 'e':
+                    if (mode == ViewMode::Programmer)
+                    {
+                        (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::E);
+                    }
+                    else
+                    {
+                        (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Exp);
+                    }
+                    break;
+                case '-':
+                    (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Negate);
+                    break;
                 }
-                break;
-            case '-':
-                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Negate);
-                break;
+
             }
 
+            return numberFound.length();
         }
-
-        return numberFound.length();
     }
     return -1;
 }
