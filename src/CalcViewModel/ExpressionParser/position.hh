@@ -31,12 +31,12 @@
    version 2.2 of Bison.  */
 
 /**
- ** \file C:\Users\rudy\source\repos\calculator\src\CalcViewModel\ExpressionParser\BisonGeneratedFiles\position.hh
+ ** \file C:\Users\rudy\source\repos\calculator\src\CalcViewModel\ExpressionParser\position.hh
  ** Define the yy::position class.
  */
 
-#ifndef YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_BISONGENERATEDFILES_POSITION_HH_INCLUDED
-# define YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_BISONGENERATEDFILES_POSITION_HH_INCLUDED
+#ifndef YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_POSITION_HH_INCLUDED
+# define YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_POSITION_HH_INCLUDED
 
 # include <algorithm> // std::max
 # include <iostream>
@@ -91,7 +91,7 @@ namespace yy {
     /// (column related) Advance to the COUNT next columns.
     void columns (int count = 1)
     {
-      column = max (1u, column + count);
+      column = std::max (1u, column + count);
     }
     /** \} */
 
@@ -167,4 +167,4 @@ namespace yy {
 
 } // yy
 
-#endif /* !YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_BISONGENERATEDFILES_POSITION_HH_INCLUDED  */
+#endif /* !YY_YY_C_USERS_RUDY_SOURCE_REPOS_CALCULATOR_SRC_CALCVIEWMODEL_EXPRESSIONPARSER_POSITION_HH_INCLUDED  */

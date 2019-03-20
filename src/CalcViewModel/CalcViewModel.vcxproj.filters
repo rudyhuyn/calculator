@@ -10,6 +10,12 @@
     <Filter Include="DataLoaders">
       <UniqueIdentifier>{0184f727-b8aa-4af8-a699-63f1b56e7853}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ExpressionParser">
+      <UniqueIdentifier>{d6214bda-7f45-4258-ab91-4d90eeef61ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ExpressionParser\BisonGeneratedFiles">
+      <UniqueIdentifier>{68b85f43-745b-4e78-bf8d-5bbf370755e5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="GraphingCalculator">
       <UniqueIdentifier>{cf7dca32-9727-4f98-83c3-1c0ca7dd1e0c}</UniqueIdentifier>
     </Filter>
@@ -90,6 +96,18 @@
     <ClCompile Include="ExpressionParser\BisonParserParam.cpp" />
     <ClCompile Include="ExpressionParser\Lexer.cpp" />
     <ClCompile Include="ExpressionParser\Parser.cpp" />
+    <ClCompile Include="ExpressionParser\BisonParserParam.cpp">
+      <Filter>ExpressionParser</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionParser\Lexer.cpp">
+      <Filter>ExpressionParser</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionParser\Parser.cpp">
+      <Filter>ExpressionParser</Filter>
+    </ClCompile>
+    <ClCompile Include="ExpressionParser\BisonGeneratedFiles\BisonParser.cpp">
+      <Filter>ExpressionParser\BisonGeneratedFiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -203,14 +221,30 @@
     <ClInclude Include="Common\DelegateCommand.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\BisonParser.hpp" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\location.hh" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\position.hh" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\stack.hh" />
-    <ClInclude Include="ExpressionParser\BisonParserParam.h" />
-    <ClInclude Include="ExpressionParser\KeyChained.h" />
-    <ClInclude Include="ExpressionParser\Lexer.h" />
-    <ClInclude Include="ExpressionParser\Parser.h" />
+    <ClInclude Include="ExpressionParser\BisonParserParam.h">
+      <Filter>ExpressionParser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\KeyChained.h">
+      <Filter>ExpressionParser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\Lexer.h">
+      <Filter>ExpressionParser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\Parser.h">
+      <Filter>ExpressionParser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\stack.hh">
+      <Filter>ExpressionParser\BisonGeneratedFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\position.hh">
+      <Filter>ExpressionParser\BisonGeneratedFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\BisonParser.hpp">
+      <Filter>ExpressionParser\BisonGeneratedFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\location.hh">
+      <Filter>ExpressionParser\BisonGeneratedFiles</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json">
@@ -220,6 +254,8 @@
   <ItemGroup>
     <Page Include="$(MSBuildThisFileDirectory)DensityStyles\Compact.xaml" />
     <None Include="packages.config" />
-    <None Include="ExpressionParser\BisonParser.y" />
+    <None Include="ExpressionParser\BisonParser.y">
+      <Filter>ExpressionParser</Filter>
+    </None>
   </ItemGroup>
 </Project>

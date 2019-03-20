@@ -720,8 +720,11 @@ void StandardCalculatorViewModel::OnPasteCommand(Object ^ parameter)
     }
 
     // Ensure that the paste happens on the UI thread
-    create_task(CopyPasteManager::GetStringToPaste(mode, NavCategory::GetGroupType(mode), numberBase, bitLengthType))
-        .then([that, mode](String ^ pastedString) { that->OnPaste(pastedString); }, concurrency::task_continuation_context::use_current());
+    CopyPasteManager::GetStringToPaste().then(
+        [this, mode](String^ pastedString)
+    {
+        OnPaste(pastedString, mode);
+    }, concurrency::task_continuation_context::use_current());
 }
 
 CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(NumbersAndOperatorsEnum operation)
@@ -731,154 +734,44 @@ CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(
 
 void StandardCalculatorViewModel::OnPaste(String ^ pastedString)
 {
-    // If pastedString is invalid("NoOp") then display pasteError else process the string
-    if (CopyPasteManager::IsErrorMessage(pastedString))
+
+    unsigned int base = 0;
+    switch (GetNumberBase())
+    {
+    case DecBase:
+        base = 10;
+        break;
+    case OctBase:
+        base = 8;
+        break;
+    case HexBase:
+        base = 16;
+        break;
+    case BinBase:
+        base = 2;
+        break;
+    }
+    const auto& localizationSettings = LocalizationSettings::GetInstance();
+
+    auto keys = m_parser.Parse(pastedString->Data(), mode, base, localizationSettings.GetDecimalSeparatorStr(), localizationSettings.GetNumberGroupingSeparatorStr());
+
+
+    // If pastedString is invalid then display pasteError else process the string
+    if (keys == nullptr)
     {
         this->DisplayPasteError();
         return;
     }
 
-    TraceLogger::GetInstance()->LogInputPasted(GetCalculatorMode());
-    bool isFirstLegalChar = true;
+    TraceLogger::GetInstance().LogValidInputPasted(mode);
     m_standardCalculatorManager.SendCommand(Command::CommandCENTR);
-    bool sendNegate = false;
-    bool processedDigit = false;
-    bool sentEquals = false;
-    bool isPreviousOperator = false;
 
-    vector<bool> negateStack;
-
-    // Iterate through each character pasted, and if it's valid, send it to the model.
-    auto it = pastedString->Begin();
-
-    while (it != pastedString->End())
+    for (auto&key : *keys)
     {
-        bool sendCommand = true;
-        auto buttonInfo = MapCharacterToButtonId(*it);
-
-        NumbersAndOperatorsEnum mappedNumOp = buttonInfo.buttonId;
-        bool canSendNegate = buttonInfo.canSendNegate;
-
-        if (mappedNumOp == NumbersAndOperatorsEnum::None)
-        {
-            ++it;
-            continue;
-        }
-
-        if (isFirstLegalChar || isPreviousOperator)
-        {
-            isFirstLegalChar = false;
-            isPreviousOperator = false;
-
-            // If the character is a - sign, send negate
-            // after sending the next legal character.  Send nothing now, or
-            // it will be ignored.
-            if (NumbersAndOperatorsEnum::Subtract == mappedNumOp)
-            {
-                sendNegate = true;
-                sendCommand = false;
-            }
-
-            // Support (+) sign prefix
-            if (NumbersAndOperatorsEnum::Add == mappedNumOp)
-            {
-                sendCommand = false;
-            }
-        }
-
-        switch (mappedNumOp)
-        {
-            // Opening parenthesis starts a new expression and pushes negation state onto the stack
-        case NumbersAndOperatorsEnum::OpenParenthesis:
-            negateStack.push_back(sendNegate);
-            sendNegate = false;
-            break;
-
-            // Closing parenthesis pops the negation state off the stack and sends it down to the calc engine
-        case NumbersAndOperatorsEnum::CloseParenthesis:
-            if (!negateStack.empty())
-            {
-                sendNegate = negateStack.back();
-                negateStack.pop_back();
-                canSendNegate = true;
-            }
-            else
-            {
-                // Don't send a closing parenthesis if a matching opening parenthesis hasn't been sent already
-                sendCommand = false;
-            }
-            break;
-
-        case NumbersAndOperatorsEnum::Zero:
-        case NumbersAndOperatorsEnum::One:
-        case NumbersAndOperatorsEnum::Two:
-        case NumbersAndOperatorsEnum::Three:
-        case NumbersAndOperatorsEnum::Four:
-        case NumbersAndOperatorsEnum::Five:
-        case NumbersAndOperatorsEnum::Six:
-        case NumbersAndOperatorsEnum::Seven:
-        case NumbersAndOperatorsEnum::Eight:
-        case NumbersAndOperatorsEnum::Nine:
-            processedDigit = true;
-            break;
-
-        case NumbersAndOperatorsEnum::Add:
-        case NumbersAndOperatorsEnum::Subtract:
-        case NumbersAndOperatorsEnum::Multiply:
-        case NumbersAndOperatorsEnum::Divide:
-            isPreviousOperator = true;
-            break;
-        }
-
-        if (sendCommand)
-        {
-            sentEquals = (mappedNumOp == NumbersAndOperatorsEnum::Equals);
-            Command cmdenum = ConvertToOperatorsEnum(mappedNumOp);
-            m_standardCalculatorManager.SendCommand(cmdenum);
-
-            // The CalcEngine state machine won't allow the negate command to be sent before any
-            // other digits, so instead a flag is set and the command is sent after the first appropriate
-            // command.
-            if (sendNegate)
-            {
-                if (canSendNegate)
-                {
-                    Command cmdNegate = ConvertToOperatorsEnum(NumbersAndOperatorsEnum::Negate);
-                    m_standardCalculatorManager.SendCommand(cmdNegate);
-                }
-
-                // Can't send negate on a leading zero, so wait until the appropriate time to send it.
-                if (NumbersAndOperatorsEnum::Zero != mappedNumOp && NumbersAndOperatorsEnum::Decimal != mappedNumOp)
-                {
-                    sendNegate = false;
-                }
-            }
-        }
-
-        // Handle exponent and exponent sign (...e+... or ...e-... or ...e...)
-        if (mappedNumOp == NumbersAndOperatorsEnum::Exp)
-        {
-            // Check the following item
-            switch (MapCharacterToButtonId(*(it + 1)).buttonId)
-            {
-            case NumbersAndOperatorsEnum::Subtract:
-            {
-                Command cmdNegate = ConvertToOperatorsEnum(NumbersAndOperatorsEnum::Negate);
-                m_standardCalculatorManager.SendCommand(cmdNegate);
-                ++it;
-            }
-            break;
-            case NumbersAndOperatorsEnum::Add:
-            {
-                // Nothing to do, skip to the next item
-                ++it;
-            }
-            break;
-            }
-        }
-
-        ++it;
+        auto command = ConvertToOperatorsEnum(key);
+        m_standardCalculatorManager.SendCommand(command);
     }
+    delete keys;
 }
 
 void StandardCalculatorViewModel::OnClearMemoryCommand(Object ^ parameter)
@@ -1285,29 +1178,29 @@ void StandardCalculatorViewModel::SaveEditedCommand(_In_ unsigned int tokenPosit
 
         switch (command)
         {
-        case Command::CommandASIN:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSIN), true, angleType);
-            break;
-        case Command::CommandACOS:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOS), true, angleType);
-            break;
-        case Command::CommandATAN:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTAN), true, angleType);
-            break;
-        case Command::CommandASINH:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSINH), true, angleType);
-            break;
-        case Command::CommandACOSH:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOSH), true, angleType);
-            break;
-        case Command::CommandATANH:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTANH), true, angleType);
-            break;
-        case Command::CommandPOWE:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandLN), true, angleType);
-            break;
-        default:
-            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(command), false, angleType);
+            case static_cast<int>(Command::CommandASIN) :
+                updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSIN), true, angleType);
+                break;
+                case static_cast<int>(Command::CommandACOS) :
+                    updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOS), true, angleType);
+                    break;
+                    case static_cast<int>(Command::CommandATAN) :
+                        updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTAN), true, angleType);
+                        break;
+                        case static_cast<int>(Command::CommandASINH) :
+                            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSINH), true, angleType);
+                            break;
+                            case static_cast<int>(Command::CommandACOSH) :
+                                updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOSH), true, angleType);
+                                break;
+                                case static_cast<int>(Command::CommandATANH) :
+                                    updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTANH), true, angleType);
+                                    break;
+                                    case static_cast<int>(Command::CommandPOWE) :
+                                        updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandLN), true, angleType);
+                                        break;
+                                    default:
+                                        updatedToken = CCalcEngine::OpCodeToUnaryString(nOpCode, false, angleType);
         }
         if ((token.first.length() > 0) && (token.first[token.first.length() - 1] == L'('))
         {

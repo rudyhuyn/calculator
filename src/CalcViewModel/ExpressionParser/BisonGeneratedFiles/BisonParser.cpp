@@ -43,7 +43,11 @@
 
 #include "pch.h"
 #include "../BisonParserParam.h"
+#include "Common/CalculatorButtonUser.h"
+
 using namespace std;
+using namespace CalculatorApp;
+
 #pragma warning (disable: 4702)
 #pragma warning (disable: 4127)
 #pragma warning (disable: 4065)
@@ -430,7 +434,7 @@ namespace yy {
   case 4:
 
     {
-					auto equ = new KeyChained(std::wstring(L"EQU"), nullptr);
+					auto equ = new KeyChained(NumbersAndOperatorsEnum::Equals, nullptr);
 					(yyval.keys) = (yysemantic_stack_[(2) - (1)].keys);
 					(yyval.keys)->last->next = equ;
 					(yyval.keys)->last = equ;
@@ -440,105 +444,105 @@ namespace yy {
   case 5:
 
     {
-			(yyval.key) = new KeyChained(std::wstring(L"SIN"), nullptr);
+			(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Sin, nullptr);
 		}
     break;
 
   case 6:
 
     {
-			(yyval.key) = new KeyChained(std::wstring(L"COS"), nullptr);
+			(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Cos, nullptr);
 		}
     break;
 
   case 7:
 
     {
-			(yyval.key) = new KeyChained(std::wstring(L"TAN"), nullptr);
+			(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Tan, nullptr);
 		}
     break;
 
   case 8:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"PLUS"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Add, nullptr);
 	}
     break;
 
   case 9:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"MINUS"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Subtract, nullptr);
 	}
     break;
 
   case 10:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"MULTIPLY"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Multiply, nullptr);
 	}
     break;
 
   case 11:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"DIVIDE"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Divide, nullptr);
 	}
     break;
 
   case 12:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"POWER"), nullptr);		
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::XPowerY, nullptr);		
 	}
     break;
 
   case 13:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"BIN_AND"), nullptr);		
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::And, nullptr);		
 	}
     break;
 
   case 14:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"BIN_OR"), nullptr);		
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Or, nullptr);		
 	}
     break;
 
   case 15:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"BIN_XOR"), nullptr);		
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Xor, nullptr);		
 	}
     break;
 
   case 16:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"MINUSNEG"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Negate, nullptr);
 	}
     break;
 
   case 17:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"BINARYNOT"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Not, nullptr);
 	}
     break;
 
   case 18:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"POWER2"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::XPower2, nullptr);
 	}
     break;
 
   case 19:
 
     {
-		(yyval.key) = new KeyChained(std::wstring(L"POWER3"), nullptr);
+		(yyval.key) = new KeyChained(NumbersAndOperatorsEnum::Cube, nullptr);
 	}
     break;
 
@@ -602,9 +606,9 @@ namespace yy {
   case 27:
 
     {
-					(yysemantic_stack_[(4) - (3)].keys)->begin = new KeyChained(std::wstring(L"OPEN_PARENTHESE"), (yysemantic_stack_[(4) - (3)].keys)->begin);
+					(yysemantic_stack_[(4) - (3)].keys)->begin = new KeyChained(NumbersAndOperatorsEnum::OpenParenthesis, (yysemantic_stack_[(4) - (3)].keys)->begin);
 					(yyval.keys) = (yysemantic_stack_[(4) - (3)].keys);
-				    (yysemantic_stack_[(4) - (3)].keys)->last->next = new KeyChained(std::wstring(L"CLOSE_PARENTHESE"), (yysemantic_stack_[(4) - (1)].key));
+				    (yysemantic_stack_[(4) - (3)].keys)->last->next = new KeyChained(NumbersAndOperatorsEnum::CloseParenthesis, (yysemantic_stack_[(4) - (1)].key));
 					(yyval.keys)->last = (yysemantic_stack_[(4) - (1)].key);
 				}
     break;
@@ -619,9 +623,9 @@ namespace yy {
   case 29:
 
     {
-					auto close_parenthesis = new KeyChained(std::wstring(L"CLOSE_PARENTHESE"), nullptr);
+					auto close_parenthesis = new KeyChained(NumbersAndOperatorsEnum::CloseParenthesis, nullptr);
 
-					(yysemantic_stack_[(3) - (2)].keys)->begin = new KeyChained(std::wstring(L"OPEN_PARENTHESE"), (yysemantic_stack_[(3) - (2)].keys)->begin);
+					(yysemantic_stack_[(3) - (2)].keys)->begin = new KeyChained(NumbersAndOperatorsEnum::OpenParenthesis, (yysemantic_stack_[(3) - (2)].keys)->begin);
 					(yyval.keys) = (yysemantic_stack_[(3) - (2)].keys);
 				    (yysemantic_stack_[(3) - (2)].keys)->last->next = close_parenthesis;
 					(yyval.keys)->last = close_parenthesis;
@@ -986,9 +990,9 @@ namespace yy {
   const unsigned char
   Parser::yyrline_[] =
   {
-         0,    63,    63,    70,    74,    84,    88,    92,    99,   103,
-     107,   111,   115,   119,   123,   127,   134,   138,   145,   149,
-     156,   160,   170,   174,   181,   186,   194,   198,   208,   212
+         0,    67,    67,    74,    78,    88,    92,    96,   103,   107,
+     111,   115,   119,   123,   127,   131,   138,   142,   149,   153,
+     160,   164,   174,   178,   185,   190,   198,   202,   212,   216
   };
 
   // Print the state stack on the debug stream.
@@ -1077,5 +1081,6 @@ namespace yy {
 
 
 } // yy
+
 
 

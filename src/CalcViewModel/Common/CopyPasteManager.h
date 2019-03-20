@@ -25,13 +25,9 @@ public
     public ref class CopyPasteManager sealed
     {
     public:
-        static void CopyToClipboard(Platform::String ^ stringToCopy);
-        static Windows::Foundation::IAsyncOperation<
-            Platform::String
-            ^> ^ GetStringToPaste(CalculatorApp::Common::ViewMode mode, CalculatorApp::Common::CategoryGroupType modeType, CalculatorApp::Common::NumberBase programmerNumberBase, CalculatorApp::Common::BitLength bitLengthType);
-        static bool HasStringToPaste();
-        static bool IsErrorMessage(Platform::String ^ message);
-        static property unsigned int MaxPasteableLength
+        static void CopyToClipboard(Platform::String^ stringToCopy);
+        static concurrency::task<Platform::String^> GetStringToPaste();
+        static bool HasStringToPaste()
         {
             unsigned int get()
             {
@@ -84,42 +80,23 @@ public
             }
         }
 
-        static Platform::String
-            ^ ValidatePasteExpression(
-                Platform::String ^ pastedText,
-                CalculatorApp::Common::ViewMode mode,
-                CalculatorApp::Common::NumberBase programmerNumberBase,
-                CalculatorApp::Common::BitLength bitLengthType);
-        static Platform::String
-            ^ ValidatePasteExpression(
-                Platform::String ^ pastedText,
-                CalculatorApp::Common::ViewMode mode,
-                CalculatorApp::Common::CategoryGroupType modeType,
-                CalculatorApp::Common::NumberBase programmerNumberBase,
-                CalculatorApp::Common::BitLength bitLengthType);
-        static CopyPasteMaxOperandLengthAndValue GetMaxOperandLengthAndValue(
-            CalculatorApp::Common::ViewMode mode,
-            CalculatorApp::Common::CategoryGroupType modeType,
-            CalculatorApp::Common::NumberBase programmerNumberBase,
-            CalculatorApp::Common::BitLength bitLengthType);
-        static Windows::Foundation::Collections::IVector<
-            Platform::String ^> ^ ExtractOperands(Platform::String ^ pasteExpression, CalculatorApp::Common::ViewMode mode);
-        static bool ExpressionRegExMatch(
-            Windows::Foundation::Collections::IVector<Platform::String ^> ^ operands,
-            CalculatorApp::Common::ViewMode mode,
-            CalculatorApp::Common::CategoryGroupType modeType,
-            CalculatorApp::Common::NumberBase programmerNumberBase,
-            CalculatorApp::Common::BitLength bitLengthType);
-        static Platform::String ^ SanitizeOperand(Platform::String ^ operand);
-        static Platform::String ^ RemoveUnwantedCharsFromString(Platform::String ^ input);
-        static Platform::IBox<unsigned long long int> ^ TryOperandToULL(Platform::String ^ operand, CalculatorApp::Common::NumberBase numberBase);
-        static ULONG32 StandardScientificOperandLength(Platform::String ^ operand);
-        static ULONG32 OperandLength(
-            Platform::String ^ operand,
-            CalculatorApp::Common::ViewMode mode,
-            CalculatorApp::Common::CategoryGroupType modeType,
-        CalculatorApp::Common::NumberBase programmerNumberBase);
-        static ULONG32 ProgrammerOperandLength(Platform::String ^ operand, CalculatorApp::Common::NumberBase numberBase);
+    private:
+        static int ClipboardTextFormat();
+
+        static std::pair<size_t, uint64_t> GetMaxOperandLengthAndValue(CalculatorApp::Common::ViewMode mode, CalculatorApp::Common::CategoryGroupType modeType, int programmerNumberBase = -1, int bitLengthType = -1);
+        static size_t OperandLength(std::wstring operand, CalculatorApp::Common::ViewMode mode, CalculatorApp::Common::CategoryGroupType modeType, int programmerNumberBase = -1);
+        static size_t StandardScientificOperandLength(std::wstring operand);
+        static size_t ProgrammerOperandLength(const std::wstring& operand, int numberBase);
+
+        static constexpr size_t MaxStandardOperandLength = 16;
+        static constexpr size_t MaxScientificOperandLength = 32;
+        static constexpr size_t MaxConverterInputLength = 16;
+        static constexpr size_t MaxOperandCount = 100;
+        static constexpr size_t MaxPasteableLength = 512;
+        static constexpr size_t MaxExponentLength = 4;
+        static constexpr size_t MaxProgrammerBitLength = 64;
+
+        static Platform::String^ supportedFormats[];
 
     private:
         static constexpr size_t MaxStandardOperandLengthValue = 16;

@@ -501,10 +501,11 @@ void UnitConverterViewModel::OnPasteCommand(Platform::Object ^ parameter)
     // Ensure that the paste happens on the UI thread
     // EventWriteClipboardPaste_Start();
     // Any converter ViewMode is fine here.
-
-    auto that(this);
-    create_task(CopyPasteManager::GetStringToPaste(m_Mode, NavCategory::GetGroupType(m_Mode), NumberBase::Unknown, BitLength::BitLengthUnknown))
-        .then([that](String ^ pastedString) { that->OnPaste(pastedString); }, concurrency::task_continuation_context::use_current());
+    CopyPasteManager::GetStringToPaste().then(
+        [this](String^ pastedString)
+    {
+        OnPaste(pastedString, m_Mode);
+    }, concurrency::task_continuation_context::use_current());
 }
 
 void UnitConverterViewModel::InitializeView()
@@ -866,70 +867,27 @@ NumbersAndOperatorsEnum UnitConverterViewModel::MapCharacterToButtonId(const wch
 
 void UnitConverterViewModel::OnPaste(String ^ stringToPaste)
 {
-    // If pastedString is invalid("NoOp") then display pasteError else process the string
-    if (CopyPasteManager::IsErrorMessage(stringToPaste))
+    const auto& localizationSettings = LocalizationSettings::GetInstance();
+
+    auto keys = m_parser.Parse(stringToPaste->Data(), mode, 10, localizationSettings.GetDecimalSeparatorStr(), localizationSettings.GetNumberGroupingSeparatorStr());
+
+
+    // If pastedString is invalid then display pasteError else process the string
+    if (keys == nullptr)
     {
         this->DisplayPasteError();
         return;
     }
 
-    TraceLogger::GetInstance()->LogInputPasted(Mode);
-    bool isFirstLegalChar = true;
-    bool sendNegate = false;
-    wstring accumulation;
+    TraceLogger::GetInstance().LogValidInputPasted(mode);
 
-    for (const auto ch : stringToPaste)
+    m_model->SendCommand(UCM::Command::Clear);
+    for (auto&key : *keys)
     {
-        bool canSendNegate = false;
-
-        NumbersAndOperatorsEnum op = MapCharacterToButtonId(ch, canSendNegate);
-
-        if (NumbersAndOperatorsEnum::None != op)
-        {
-            if (isFirstLegalChar)
-            {
-                // Send Clear before sending something that will actually apply
-                // to the field.
-                m_model->SendCommand(UCM::Command::Clear);
-                isFirstLegalChar = false;
-
-                // If the very first legal character is a - sign, send negate
-                // after sending the next legal character.  Send nothing now, or
-                // it will be ignored.
-                if (NumbersAndOperatorsEnum::Negate == op)
-                {
-                    sendNegate = true;
-                }
-            }
-
-            // Negate is only allowed if it's the first legal character, which is handled above.
-            if (NumbersAndOperatorsEnum::Negate != op)
-            {
-                UCM::Command cmd = CommandFromButtonId(op);
-                m_model->SendCommand(cmd);
-
-                if (sendNegate)
-                {
-                    if (canSendNegate)
-                    {
-                        m_model->SendCommand(UCM::Command::Negate);
-                    }
-                    sendNegate = false;
-                }
-            }
-
-            accumulation += ch;
-            UpdateInputBlocked(accumulation);
-            if (m_isInputBlocked)
-            {
-                break;
-            }
-        }
-        else
-        {
-            sendNegate = false;
-        }
+        auto cmd = CommandFromButtonId(key);
+        m_model->SendCommand(cmd);
     }
+    delete keys;
 }
 
 String ^ UnitConverterViewModel::GetLocalizedAutomationName(_In_ String ^ displayvalue, _In_ String ^ unitname, _In_ String ^ format)

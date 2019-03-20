@@ -1,13 +1,14 @@
 #pragma once
-#include<string>
+#include "Common/CalculatorButtonUser.h"
 
 class KeyChained
 {
 public:
-    KeyChained(std::wstring key, KeyChained * next) :key(key), next(next) {}
-    std::wstring key;
+    KeyChained(CalculatorApp::NumbersAndOperatorsEnum key, KeyChained * next) :key(key), next(next) {}
+    CalculatorApp::NumbersAndOperatorsEnum key; 
     KeyChained * next;
 };
+
 
 struct KeyChainedIterator
 {

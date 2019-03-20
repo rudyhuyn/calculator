@@ -1,5 +1,7 @@
 #pragma once
 #include "pch.h"
+#include "Common/CalculatorButtonUser.h"
+#include "Common/NavCategory.h"
 
 #define LexemeId int
 
@@ -46,7 +48,7 @@ public:
 class Lexeme
 {
 public:
-    Lexeme(LexemeId id, std::wstring str, std::vector<std::wstring> * keys) : Lexeme(id, str)
+    Lexeme(LexemeId id, std::wstring str, std::vector<CalculatorApp::NumbersAndOperatorsEnum> * keys) : Lexeme(id, str)
     {
         m_keys = keys;
     }
@@ -54,15 +56,15 @@ public:
 public:
     std::wstring m_str;
     LexemeId m_id;
-    std::vector<std::wstring> * m_keys;
+    std::vector<CalculatorApp::NumbersAndOperatorsEnum> * m_keys;
 };
 
 class LexemeReader
 {
 public:
-    bool GetLexemes(std::wstring item, std::vector<Lexeme *>** lexemes);
+    bool GetLexemes(std::wstring item, CalculatorApp::Common::ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, std::vector<Lexeme *>** lexemes);
 protected:
-    int ParseNumber(const std::wstring::const_iterator &begin, const std::wstring::const_iterator &end, std::vector<std::wstring>** keys);
+    int ParseNumber(const std::wstring::const_iterator &begin, const std::wstring::const_iterator &end, CalculatorApp::Common::ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, std::vector<CalculatorApp::NumbersAndOperatorsEnum>** keys);
 private:
     std::vector<Lexeme *>::const_iterator iterator;
 };

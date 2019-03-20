@@ -1,27 +1,17 @@
 #include "pch.h"
 #include "Lexer.h"
 #include "BisonGeneratedFiles/BisonParser.hpp" 
+#include "Common/CalculatorButtonUser.h"
 
 using namespace std;
+using namespace CalculatorApp::Common;
 
 #define yytokentype yy::Parser::token
 
-wchar_t decimalSeparatorChar = ',';
-wchar_t digitGroupingChar = ' ';
-std::wregex regexNumber = std::wregex((
-    L"("
-    "(\\d{0,3}(?:\\" + digitGroupingChar + L"\\d{3})+(\\" + decimalSeparatorChar + L"\\d+)?)|"
-    "(\\d*\\" + decimalSeparatorChar + L"\\d+)|"
-    "(\\d+\\" + decimalSeparatorChar + L"?)"
-    ")"
-    "(e[+-]?\\d+)?")->Data());
-LexInfoRegex * numberDecimal = new LexInfoRegex(yytokentype::NUMBER, L"(?:\\d+|(?:\\d*(?:\\.\\d+)))");
-LexInfoRegex * numberDec = new LexInfoRegex(yytokentype::NUMBER, L"\\d");
-LexInfoRegex * numberOcto = new LexInfoRegex(yytokentype::NUMBER, L"[0-7]");
-LexInfoRegex * numberHexa = new LexInfoRegex(yytokentype::NUMBER, L"[0-9A-F]");
-LexInfoRegex * numberBin = new LexInfoRegex(yytokentype::NUMBER, L"[01]+");
-
-
+std::wregex regexNumberDec(L"\\d+");
+std::wregex regexNumberOcto(L"[0-7]");
+std::wregex regexNumberHexa(L"[0-9A-F]");
+std::wregex regexNumberBin(L"[01]+");
 
 vector<LexInfo *> const lexemeRulesBase(
     {
@@ -35,9 +25,7 @@ vector<LexInfo *> const lexemeRulesBase(
 
 vector<LexInfo *> const lexemeRulesNormal(
     {
-        new LexInfoChar(yytokentype::POWER2, L'²'),
         new LexInfoChar(yytokentype::POWER2, 253),
-        new LexInfoChar(yytokentype::POWER3, L'³'),
         new LexInfoChar(yytokentype::POWER2, 254),
     });
 
@@ -46,6 +34,8 @@ vector<LexInfo *> const lexemeRulesProg(
        new LexInfoChar(yytokentype::LEFTPARENTHESIS, L'('),
        new LexInfoChar(yytokentype::RIGHTPARENTHESIS, L')'),
        new LexInfoChar(yytokentype::PROG_AND, L'&'),
+       new LexInfoChar(yytokentype::PROG_OR, L'|'),
+       new LexInfoChar(yytokentype::PROG_XOR, L'^'),
        new LexInfoChar(yytokentype::PROG_NOT, L'~'),
     });
 
@@ -86,13 +76,65 @@ int LexInfoRegex::CheckLex(const wstring::const_iterator &begin, const wstring::
     return -1;
 }
 
-int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstring::const_iterator &end, std::vector<std::wstring>** keys)
+int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstring::const_iterator &end, ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, std::vector<CalculatorApp::NumbersAndOperatorsEnum>** keys)
 {
     *keys = nullptr;
     wsmatch match;
-    if (regex_search(begin, end, match, regexNumber, regex_constants::match_continuous))
+
+    wchar_t decimalSeparatorChar = decimalSeparator[0];
+    wchar_t digitGroupingChar = thousandSeparator[0];
+    std::wregex regNumberToUse;
+    switch (mode)
     {
-        *keys = new std::vector<std::wstring>();
+    case ViewMode::Standard:
+    {
+        std::wregex regexNumberDecimal((L"(?:\\d+|(?:\\d*(?:\\" + decimalSeparatorChar + L"\\d+)))")->Data());
+        regNumberToUse = regexNumberDecimal;
+        break;
+    }
+    case ViewMode::Scientific:
+    {
+        std::wregex regexNumberDecimalExtended((
+            L"("
+            "(\\d{0,3}(?:\\" + digitGroupingChar + L"\\d{3})+(\\" + decimalSeparatorChar + L"\\d+)?)|"
+            "(\\d*\\" + decimalSeparatorChar + L"\\d+)|"
+            "(\\d+\\" + decimalSeparatorChar + L"?)"
+            ")"
+            "(e[+-]?\\d+)?")->Data());
+        regNumberToUse = regexNumberDecimalExtended;
+    }
+    break;
+    default:
+    {
+        switch (base)
+        {
+        case 10:
+        {
+            regNumberToUse = regexNumberDec;
+            break;
+        }
+        case 16:
+        {
+            regNumberToUse = regexNumberHexa;
+            break;
+        }
+        case 8:
+        {
+            regNumberToUse = regexNumberOcto;
+            break;
+        }
+        case 2:
+        {
+            regNumberToUse = regexNumberBin;
+            break;
+        }
+        }
+    }
+    }
+
+    if (regex_search(begin, end, match, regNumberToUse, regex_constants::match_continuous))
+    {
+        *keys = new std::vector<CalculatorApp::NumbersAndOperatorsEnum>();
         std::wstring numberFound = match.str();
         for (auto&c : numberFound)
         {
@@ -100,46 +142,46 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
                 continue;
             if (c == decimalSeparatorChar)
             {
-                (*keys)->push_back(std::wstring(L"<Separator>"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Decimal);
                 continue;
             }
             switch (c)
             {
             case '0':
-                (*keys)->push_back(std::wstring(L"0"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Zero);
                 break;
             case '1':
-                (*keys)->push_back(std::wstring(L"1"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::One);
                 break;
             case '2':
-                (*keys)->push_back(std::wstring(L"2"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Two);
                 break;
             case '3':
-                (*keys)->push_back(std::wstring(L"3"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Three);
                 break;
             case '4':
-                (*keys)->push_back(std::wstring(L"4"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Four);
                 break;
             case '5':
-                (*keys)->push_back(std::wstring(L"5"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Five);
                 break;
             case '6':
-                (*keys)->push_back(std::wstring(L"6"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Six);
                 break;
             case '7':
-                (*keys)->push_back(std::wstring(L"7"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Seven);
                 break;
             case '8':
-                (*keys)->push_back(std::wstring(L"8"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Eight);
                 break;
             case '9':
-                (*keys)->push_back(std::wstring(L"9"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Nine);
                 break;
             case 'e':
-                (*keys)->push_back(std::wstring(L"EXP"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Exp);
                 break;
             case '-':
-                (*keys)->push_back(std::wstring(L"NEG"));
+                (*keys)->push_back(CalculatorApp::NumbersAndOperatorsEnum::Negate);
                 break;
             }
 
@@ -150,7 +192,7 @@ int LexemeReader::ParseNumber(const wstring::const_iterator &begin, const wstrin
     return -1;
 }
 
-bool LexemeReader::GetLexemes(wstring item, vector<Lexeme *>** lexemes)
+bool LexemeReader::GetLexemes(wstring item, ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, vector<Lexeme *>** lexemes)
 {
     *lexemes = nullptr;
     vector<Lexeme *>* result = new vector<Lexeme *>();
@@ -160,10 +202,25 @@ bool LexemeReader::GetLexemes(wstring item, vector<Lexeme *>** lexemes)
     vector<vector<LexInfo *>> lexemesCollections{
         lexemeRulesBase
     };
-    if (true)
+    switch (mode)
+    {
+    case ViewMode::Scientific:
     {
         lexemesCollections.push_back(lexemeRulesNormal);
         lexemesCollections.push_back(lexemeRulesScientific);
+    }
+    break;
+    case ViewMode::Programmer:
+    {
+        lexemesCollections.push_back(lexemeRulesNormal);
+        lexemesCollections.push_back(lexemeRulesProg);
+    }
+    break;
+    default:
+    {
+        lexemesCollections.push_back(lexemeRulesNormal);
+    }
+    break;
     }
 
     while (currentPos != end)
@@ -171,8 +228,8 @@ bool LexemeReader::GetLexemes(wstring item, vector<Lexeme *>** lexemes)
         bool found = false;
 
         //First check if it's a number
-        std::vector<std::wstring> *keys;
-        auto nbrCharacters = ParseNumber(currentPos, end, &keys);
+        std::vector<CalculatorApp::NumbersAndOperatorsEnum> *keys;
+        auto nbrCharacters = ParseNumber(currentPos, end, mode, base, decimalSeparator, thousandSeparator, &keys);
         if (nbrCharacters > 0)
         {
             result->push_back(new Lexeme(yytokentype::NUMBER, wstring(currentPos, currentPos + nbrCharacters), keys));

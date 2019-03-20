@@ -9,8 +9,7 @@
 #include "Common/CalculatorButtonUser.h"
 #include "HistoryViewModel.h"
 #include "MemoryItemViewModel.h"
-#include "Common/BitLength.h"
-#include "Common/NumberBase.h"
+#include "ExpressionParser/Parser.h"
 
 namespace CalculatorUnitTests
 {
@@ -312,21 +311,22 @@ namespace CalculatorApp
             CalculatorDisplay m_calculatorDisplay;
             CalculatorApp::EngineResourceProvider m_resourceProvider;
             CalculationManager::CalculatorManager m_standardCalculatorManager;
-            Platform::String ^ m_expressionAutomationNameFormat;
-            Platform::String ^ m_localizedCalculationResultAutomationFormat;
-            Platform::String ^ m_localizedCalculationResultDecimalAutomationFormat;
-            Platform::String ^ m_localizedHexaDecimalAutomationFormat;
-            Platform::String ^ m_localizedDecimalAutomationFormat;
-            Platform::String ^ m_localizedOctalAutomationFormat;
-            Platform::String ^ m_localizedBinaryAutomationFormat;
-            Platform::String ^ m_localizedMaxDigitsReachedAutomationFormat;
-            Platform::String ^ m_localizedButtonPressFeedbackAutomationFormat;
-            Platform::String ^ m_localizedMemorySavedAutomationFormat;
-            Platform::String ^ m_localizedMemoryItemChangedAutomationFormat;
-            Platform::String ^ m_localizedMemoryItemClearedAutomationFormat;
-            Platform::String ^ m_localizedMemoryCleared;
-            Platform::String ^ m_localizedOpenParenthesisCountChangedAutomationFormat;
-            Platform::String ^ m_localizedNoRightParenthesisAddedFormat;
+            CalcExpressionParser m_parser;
+            Platform::String^ m_expressionAutomationNameFormat;
+            Platform::String^ m_localizedCalculationResultAutomationFormat;
+            Platform::String^ m_localizedCalculationResultDecimalAutomationFormat;
+            Platform::String^ m_localizedHexaDecimalAutomationFormat;
+            Platform::String^ m_localizedDecimalAutomationFormat;
+            Platform::String^ m_localizedOctalAutomationFormat;
+            Platform::String^ m_localizedBinaryAutomationFormat;
+            Platform::String^ m_localizedMaxDigitsReachedAutomationFormat;
+            Platform::String^ m_localizedButtonPressFeedbackAutomationFormat;
+            Platform::String^ m_localizedMemorySavedAutomationFormat;
+            Platform::String^ m_localizedMemoryItemChangedAutomationFormat;
+            Platform::String^ m_localizedMemoryItemClearedAutomationFormat;
+            Platform::String^ m_localizedMemoryCleared;
+            Platform::String^ m_localizedOpenParenthesisCountChangedAutomationFormat;
+            Platform::String^ m_localizedNoRightParenthesisAddedFormat;
 
             bool m_isOperandEnabled;
             bool m_isEditingEnabled;

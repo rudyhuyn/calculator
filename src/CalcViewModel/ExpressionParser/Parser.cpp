@@ -3,31 +3,42 @@
 #include "BisonGeneratedFiles/BisonParser.hpp"
 #include "BisonParserParam.h"
 using namespace std;
+using namespace CalculatorApp::Common;
 
 CalcExpressionParser::~CalcExpressionParser()
 {
 }
 
-bool CalcExpressionParser::Parse(wstring text)
+vector<CalculatorApp::NumbersAndOperatorsEnum> * CalcExpressionParser::Parse(wstring text, ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator)
 {
+    m_resultReceived = nullptr;
     vector<Lexeme*>* lexemes;
-    if (!m_reader.GetLexemes(text, &lexemes))
+    if (!m_reader.GetLexemes(text, mode, base, decimalSeparator, thousandSeparator, &lexemes))
     {
-        return false;
+        return nullptr;
     }
     auto parser = yy::Parser(new BisonParserParam({this, lexemes->begin(), lexemes->end()}));
-    parser.parse();
-    return true;
+    if (parser.parse() == 0)
+    {
+        //Convert to a std::vector
+
+        vector<CalculatorApp::NumbersAndOperatorsEnum> * result = new vector<CalculatorApp::NumbersAndOperatorsEnum>();
+        KeyChained * currentKey = m_resultReceived;
+        while (currentKey != nullptr)
+        {
+            result->push_back(currentKey->key);
+            currentKey  = currentKey->next;
+        }
+
+        return result;
+    }
+    return nullptr;
 }
 
 void CalcExpressionParser::GetResult(KeyChained *keys)
 {
-    KeyChained *current = keys;
-    while (current != nullptr)
-    {
-        std::wcout << current->key.data() << std::endl;
-        current = current->next;
-    }
+    //TODO: change how we get the result and send it to Parse(wstring)
+    m_resultReceived = keys;
 }
 
 

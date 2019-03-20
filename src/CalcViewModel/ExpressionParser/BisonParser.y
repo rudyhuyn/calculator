@@ -52,7 +52,11 @@ class BisonParserParam;
 %{
 #include "pch.h"
 #include "../BisonParserParam.h"
+#include "Common/CalculatorButtonUser.h"
+
 using namespace std;
+using namespace CalculatorApp;
+
 #pragma warning (disable: 4702)
 #pragma warning (disable: 4127)
 #pragma warning (disable: 4065)
@@ -73,7 +77,7 @@ command
 			}
 	| binary_expr EQU
 			{
-					auto equ = new KeyChained(std::wstring(L"EQU"), nullptr);
+					auto equ = new KeyChained(NumbersAndOperatorsEnum::Equals, nullptr);
 					$$ = $1;
 					$$->last->next = equ;
 					$$->last = equ;
@@ -83,72 +87,72 @@ command
 trigo_function
 	: SIN
 		{
-			$$ = new KeyChained(std::wstring(L"SIN"), nullptr);
+			$$ = new KeyChained(NumbersAndOperatorsEnum::Sin, nullptr);
 		}
 	| COS
 		{
-			$$ = new KeyChained(std::wstring(L"COS"), nullptr);
+			$$ = new KeyChained(NumbersAndOperatorsEnum::Cos, nullptr);
 		}
 	| TAN
 		{
-			$$ = new KeyChained(std::wstring(L"TAN"), nullptr);
+			$$ = new KeyChained(NumbersAndOperatorsEnum::Tan, nullptr);
 		}
 	;
 
 binary_operator
     : PLUS
 	{
-		$$ = new KeyChained(std::wstring(L"PLUS"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Add, nullptr);
 	}
 	| MINUS
 	{
-		$$ = new KeyChained(std::wstring(L"MINUS"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Subtract, nullptr);
 	}
 	| MULTIPLY
 	{
-		$$ = new KeyChained(std::wstring(L"MULTIPLY"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Multiply, nullptr);
 	}
 	| DIVIDE
 	{
-		$$ = new KeyChained(std::wstring(L"DIVIDE"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Divide, nullptr);
 	}
 	| CARET
 	{
-		$$ = new KeyChained(std::wstring(L"POWER"), nullptr);		
+		$$ = new KeyChained(NumbersAndOperatorsEnum::XPowerY, nullptr);		
 	}
 	| PROG_AND
 	{
-		$$ = new KeyChained(std::wstring(L"BIN_AND"), nullptr);		
+		$$ = new KeyChained(NumbersAndOperatorsEnum::And, nullptr);		
 	}
 	| PROG_OR
 	{
-		$$ = new KeyChained(std::wstring(L"BIN_OR"), nullptr);		
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Or, nullptr);		
 	}
 	| PROG_XOR
 	{
-		$$ = new KeyChained(std::wstring(L"BIN_XOR"), nullptr);		
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Xor, nullptr);		
 	}
 	;
 
 pre_unary_operator
     : MINUS
 	{
-		$$ = new KeyChained(std::wstring(L"MINUSNEG"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Negate, nullptr);
 	}
 	| PROG_NOT
 	{
-		$$ = new KeyChained(std::wstring(L"BINARYNOT"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Not, nullptr);
 	}
 	;
 
 post_unary_operator
     : POWER2
 	{
-		$$ = new KeyChained(std::wstring(L"POWER2"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::XPower2, nullptr);
 	}
 	| POWER3
 	{
-		$$ = new KeyChained(std::wstring(L"POWER3"), nullptr);
+		$$ = new KeyChained(NumbersAndOperatorsEnum::Cube, nullptr);
 	}
 	;
 
@@ -197,9 +201,9 @@ funcall_expr
 				}
     | trigo_function LEFTPARENTHESIS binary_expr RIGHTPARENTHESIS
 				{
-					$3->begin = new KeyChained(std::wstring(L"OPEN_PARENTHESE"), $3->begin);
+					$3->begin = new KeyChained(NumbersAndOperatorsEnum::OpenParenthesis, $3->begin);
 					$$ = $3;
-				    $3->last->next = new KeyChained(std::wstring(L"CLOSE_PARENTHESE"), $1);
+				    $3->last->next = new KeyChained(NumbersAndOperatorsEnum::CloseParenthesis, $1);
 					$$->last = $1;
 				}
     ;
@@ -211,9 +215,9 @@ prim_expr
 	}
     | LEFTPARENTHESIS binary_expr RIGHTPARENTHESIS
 				{
-					auto close_parenthesis = new KeyChained(std::wstring(L"CLOSE_PARENTHESE"), nullptr);
+					auto close_parenthesis = new KeyChained(NumbersAndOperatorsEnum::CloseParenthesis, nullptr);
 
-					$2->begin = new KeyChained(std::wstring(L"OPEN_PARENTHESE"), $2->begin);
+					$2->begin = new KeyChained(NumbersAndOperatorsEnum::OpenParenthesis, $2->begin);
 					$$ = $2;
 				    $2->last->next = close_parenthesis;
 					$$->last = close_parenthesis;

@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "BisonParserParam.h"
+#include "Common/CalculatorButtonUser.h"
+
 using namespace std;
 
 int yylex(yy::Parser::semantic_type * val, BisonParserParam * param)  /* Called by yyparse on error */
@@ -8,7 +10,7 @@ int yylex(yy::Parser::semantic_type * val, BisonParserParam * param)  /* Called 
     {
         return 0;
     }
-    vector<std::wstring> * vectorKeys = (*param->iterator)->m_keys;
+    vector<CalculatorApp::NumbersAndOperatorsEnum> * vectorKeys = (*param->iterator)->m_keys;
     if (vectorKeys != nullptr && !vectorKeys->empty())
     {
         auto chained = new KeyChainedIterator();
