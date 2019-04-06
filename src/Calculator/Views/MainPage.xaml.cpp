@@ -11,7 +11,6 @@
 #include "Views/Memory.xaml.h"
 #include "Converters/BooleanToVisibilityConverter.h"
 #include "Common/AppLifecycleLogger.h"
-#include "Memory.xaml.h"
 using namespace CalculatorApp;
 using namespace CalculatorApp::Common;
 using namespace CalculatorApp::Common::Automation;
@@ -110,16 +109,7 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
     }
 
     m_model->Initialize(initialMode);
-
-    m_windowSizeEventToken = Window::Current->SizeChanged += ref new WindowSizeChangedEventHandler(this, &MainPage::WindowSizeChanged);
-    UpdateViewState();
 }
-
-void MainPage::OnNavigatingFrom(_In_ Windows::UI::Xaml::Navigation::NavigatingCancelEventArgs^ e)
-{
-    Window::Current->SizeChanged -= m_windowSizeEventToken;
-}
-
 
 void MainPage::WindowSizeChanged(_In_ Platform::Object^ /*sender*/, _In_ Windows::UI::Core::WindowSizeChangedEventArgs^ e)
 {
@@ -251,6 +241,9 @@ void MainPage::OnPageLoaded(_In_ Object^, _In_ RoutedEventArgs^ args)
         m_model->CalculatorViewModel->IsStandard = true;
     }
 
+    m_windowSizeEventToken = Window::Current->SizeChanged += ref new WindowSizeChangedEventHandler(this, &MainPage::WindowSizeChanged);
+    UpdateViewState();
+
     SetHeaderAutomationName();
     SetDefaultFocus();
 
@@ -270,7 +263,7 @@ void MainPage::PinUnpinAppBarButtonOnClicked(
     _In_ Object^ sender,
     _In_ RoutedEventArgs^ e)
 {
-    m_model->CalculatorViewModel->OnPinUnpinCommand(sender);
+     m_model->CalculatorViewModel->OnPinUnpinCommand(sender);
 }
 
 void MainPage::SetDefaultFocus()
@@ -484,6 +477,7 @@ void MainPage::ShowAboutPage()
     {
         this->FindName(L"AboutPage");
     }
+
     FlyoutBase::ShowAttachedFlyout(AboutButton);
 }
 

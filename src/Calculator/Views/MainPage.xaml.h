@@ -39,7 +39,6 @@ namespace CalculatorApp
 
     protected:
         void OnNavigatedTo(_In_ Windows::UI::Xaml::Navigation::NavigationEventArgs^ e) override;
-        void OnNavigatingFrom(_In_ Windows::UI::Xaml::Navigation::NavigatingCancelEventArgs^ e) override;
 
     private:
         void WindowSizeChanged(_In_ Platform::Object^ sender, _In_ Windows::UI::Core::WindowSizeChangedEventArgs^ e);
