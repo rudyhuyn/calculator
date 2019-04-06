@@ -7,6 +7,12 @@
 
 namespace CalculatorApp
 {
+
+    /// <summary>
+    /// Standalone control managing the title bar of the application.
+    /// Display a transparent custom title bar when high-contrast is off and the native title bar when on.
+    /// Automatically react to color changes, tablet mode, etc...
+    /// </summary>
     public ref class TitleBar sealed
     {
     public:
@@ -15,17 +21,19 @@ namespace CalculatorApp
         void OnLoaded(_In_ Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
         void OnUnloaded(_In_ Object^ sender, Windows::UI::Xaml::RoutedEventArgs^ e);
 
-        void Initialize();
         void SetTitleBarText(Platform::String^ text);
-        void SetTitleBarVisibility(bool isVisible);
+        void SetTitleBarVisibility();
         void SetTitleBarPadding();
         void SetTitleBarControlColors();
+        void SetTitleBarExtenView();
         void ColorValuesChanged(_In_ Windows::UI::ViewManagement::UISettings^ sender, _In_ Platform::Object^ e);
+        void OnHighContrastChanged(Windows::UI::ViewManagement::AccessibilitySettings ^sender, Platform::Object ^args);
 
         Platform::Agile<Windows::ApplicationModel::Core::CoreApplicationViewTitleBar^> m_coreTitleBar;
         Windows::Foundation::EventRegistrationToken m_layoutChangedToken;
         Windows::Foundation::EventRegistrationToken m_visibilityChangedToken;
         Windows::Foundation::EventRegistrationToken m_colorValuesChangedToken;
         Windows::UI::ViewManagement::UISettings^ m_uiSettings;
+        Windows::UI::ViewManagement::AccessibilitySettings^ m_accessibilitySettings;
     };
 }

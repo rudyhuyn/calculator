@@ -22,26 +22,22 @@ namespace CalculatorApp
     TitleBar::TitleBar() :
         m_coreTitleBar(CoreApplication::GetCurrentView()->TitleBar)
     {
-        InitializeComponent();
         m_uiSettings = ref new UISettings();
+        m_accessibilitySettings = ref new AccessibilitySettings();
+        InitializeComponent();
 
         Loaded += ref new RoutedEventHandler(this, &TitleBar::OnLoaded);
         Unloaded += ref new RoutedEventHandler(this, &TitleBar::OnUnloaded);
 
-        m_coreTitleBar->ExtendViewIntoTitleBar = true;
         AppName->Text = AppResourceProvider::GetInstance().GetResourceString(L"AppName");
-        LayoutRoot->Height = m_coreTitleBar->Height;
-        SetTitleBarVisibility(m_coreTitleBar->IsVisible);
-        SetTitleBarPadding();
     }
 
-    void TitleBar::OnLoaded(_In_ Object^ sender, _In_ RoutedEventArgs^ e)
+    void TitleBar::OnLoaded(_In_ Object^ /*sender*/, _In_ RoutedEventArgs^ /*e*/)
     {
-        m_visibilityChangedToken = m_coreTitleBar->IsVisibleChanged += ref new TypedEventHandler<CoreApplicationViewTitleBar^, Object^>(
-            [&](CoreApplicationViewTitleBar^ cTitleBar, Object^)
+        //Register events
+        m_visibilityChangedToken = m_coreTitleBar->IsVisibleChanged += ref new TypedEventHandler<CoreApplicationViewTitleBar^, Object^>([this](CoreApplicationViewTitleBar^ cTitleBar, Object^)
         {
-            // Update title bar visibility
-            this->SetTitleBarVisibility(cTitleBar->IsVisible);
+            this->SetTitleBarVisibility();
         });
         m_layoutChangedToken = m_coreTitleBar->LayoutMetricsChanged += ref new TypedEventHandler<CoreApplicationViewTitleBar^, Object^>(
             [this](CoreApplicationViewTitleBar^ cTitleBar, Object^)
@@ -51,11 +47,19 @@ namespace CalculatorApp
         });
 
         m_colorValuesChangedToken = m_uiSettings->ColorValuesChanged += ref new TypedEventHandler<UISettings^, Object^>(this, &TitleBar::ColorValuesChanged);
+        m_accessibilitySettings->HighContrastChanged += ref new Windows::Foundation::TypedEventHandler<Windows::UI::ViewManagement::AccessibilitySettings ^, Platform::Object ^>(this, &CalculatorApp::TitleBar::OnHighContrastChanged);
+
+        //Set properties
+        LayoutRoot->Height = m_coreTitleBar->Height;
         SetTitleBarControlColors();
+        SetTitleBarExtenView();
+        SetTitleBarVisibility();
+        SetTitleBarPadding();
     }
 
-    void TitleBar::OnUnloaded(_In_ Object^ sender, _In_ RoutedEventArgs^ e)
+    void TitleBar::OnUnloaded(_In_ Object^ /*sender*/, _In_ RoutedEventArgs^ /*e*/)
     {
+        //Unregister events
         m_coreTitleBar->LayoutMetricsChanged -= m_layoutChangedToken;
         m_layoutChangedToken.Value = 0;
         m_coreTitleBar->IsVisibleChanged -= m_visibilityChangedToken;
@@ -64,9 +68,14 @@ namespace CalculatorApp
         m_colorValuesChangedToken.Value = 0;
     }
 
-    void TitleBar::SetTitleBarVisibility(bool isVisible)
+    void TitleBar::SetTitleBarExtenView()
     {
-        this->LayoutRoot->Visibility = isVisible ? ::Visibility::Visible : ::Visibility::Collapsed;
+        m_coreTitleBar->ExtendViewIntoTitleBar = !m_accessibilitySettings->HighContrast;
+    }
+
+    void TitleBar::SetTitleBarVisibility()
+    {
+        this->LayoutRoot->Visibility = m_coreTitleBar->IsVisible && !m_accessibilitySettings->HighContrast ? ::Visibility::Visible : ::Visibility::Collapsed;
     }
 
     void TitleBar::SetTitleBarPadding()
@@ -85,22 +94,12 @@ namespace CalculatorApp
             rightAddition = m_coreTitleBar->SystemOverlayLeftInset;
         }
 
-        auto padding = Thickness(leftAddition, 0, rightAddition, 0);
-
-        this->LayoutRoot->Padding = padding;
+        this->LayoutRoot->Padding = Thickness(leftAddition, 0, rightAddition, 0);
     }
 
-    void TitleBar::ColorValuesChanged(_In_ UISettings^ sender, _In_ Object^ e)
+    void TitleBar::ColorValuesChanged(_In_ UISettings^ /*sender*/, _In_ Object^ /*e*/)
     {
-        WeakReference weakThis(this);
-        Utils::RunOnUIThreadNonblocking([weakThis]()
-        {
-            auto refThis = weakThis.Resolve<TitleBar>();
-            if (refThis != nullptr)
-            {
-                refThis->SetTitleBarControlColors();
-            }
-        }, this->Dispatcher);
+        SetTitleBarControlColors();
     }
 
     void TitleBar::SetTitleBarControlColors()
@@ -111,23 +110,43 @@ namespace CalculatorApp
         auto applicationTitleBar = applicationView->TitleBar;
         if (applicationTitleBar == nullptr) { return; }
 
-        auto bgColor = Colors::Transparent;
-        auto fgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlPageTextBaseHighBrush"));
-        auto inactivefgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundChromeDisabledLowBrush"));
-        auto hoverbgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlBackgroundListLowBrush"));
-        auto hoverfgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundBaseHighBrush"));
-        auto pressedbgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlBackgroundListMediumBrush"));
-        auto pressedfgbrush = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundBaseHighBrush"));
-
-        applicationTitleBar->ButtonBackgroundColor = bgColor;
-        applicationTitleBar->ButtonForegroundColor = fgbrush->Color;
-        applicationTitleBar->ButtonInactiveBackgroundColor = bgColor;
-        applicationTitleBar->ButtonInactiveForegroundColor = inactivefgbrush->Color;
-        applicationTitleBar->ButtonHoverBackgroundColor = hoverbgbrush->Color;
-        applicationTitleBar->ButtonHoverForegroundColor = hoverfgbrush->Color;
-        applicationTitleBar->ButtonPressedBackgroundColor = pressedbgbrush->Color;
-        applicationTitleBar->ButtonPressedForegroundColor = pressedfgbrush->Color;
+        if (m_accessibilitySettings->HighContrast)
+        {
+            //Reset to use default colors.
+            applicationTitleBar->ButtonBackgroundColor = nullptr;
+            applicationTitleBar->ButtonForegroundColor = nullptr;
+            applicationTitleBar->ButtonInactiveBackgroundColor = nullptr;
+            applicationTitleBar->ButtonInactiveForegroundColor = nullptr;
+            applicationTitleBar->ButtonHoverBackgroundColor = nullptr;
+            applicationTitleBar->ButtonHoverForegroundColor = nullptr;
+            applicationTitleBar->ButtonPressedBackgroundColor = nullptr;
+            applicationTitleBar->ButtonPressedForegroundColor = nullptr;
+        }
+        else
+        {
+            Color bgColor = Colors::Transparent;
+            Color fgColor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlPageTextBaseHighBrush"))->Color;
+            Color inactivefgColor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundChromeDisabledLowBrush"))->Color;
+            Color hoverbgColor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlBackgroundListLowBrush"))->Color;
+            Color hoverfgColor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundBaseHighBrush"))->Color;
+            Color pressedbgColor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlBackgroundListMediumBrush"))->Color;
+            Color pressedfgCoolor = safe_cast<SolidColorBrush^>(Application::Current->Resources->Lookup("SystemControlForegroundBaseHighBrush"))->Color;
+            applicationTitleBar->ButtonBackgroundColor = bgColor;
+            applicationTitleBar->ButtonForegroundColor = fgColor;
+            applicationTitleBar->ButtonInactiveBackgroundColor = bgColor;
+            applicationTitleBar->ButtonInactiveForegroundColor = inactivefgColor;
+            applicationTitleBar->ButtonHoverBackgroundColor = hoverbgColor;
+            applicationTitleBar->ButtonHoverForegroundColor = hoverfgColor;
+            applicationTitleBar->ButtonPressedBackgroundColor = pressedbgColor;
+            applicationTitleBar->ButtonPressedForegroundColor = pressedfgCoolor;
+        }
     }
 
 }
 
+void CalculatorApp::TitleBar::OnHighContrastChanged(_In_ Windows::UI::ViewManagement::AccessibilitySettings ^ /*sender*/, _In_ Platform::Object ^ /*args*/)
+{
+    SetTitleBarControlColors();
+    SetTitleBarExtenView();
+    SetTitleBarVisibility();
+}
