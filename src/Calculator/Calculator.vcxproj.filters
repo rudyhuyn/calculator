@@ -287,9 +287,6 @@
     </ClCompile>
     <ClCompile Include="WindowFrameService.cpp" />
     <ClCompile Include="Views\DateCalculator.xaml.cpp" />
-    <ClCompile Include="Common\TitleBarHelper.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
     <ClCompile Include="Controls\CalculationResultAutomationPeer.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
@@ -299,7 +296,6 @@
     <ClCompile Include="Views\StateTriggers\AspectRatioTrigger.cpp">
       <Filter>Views\StateTriggers</Filter>
     </ClCompile>
-    <ClCompile Include="Views\TitleBar.xaml.cpp" />
     <ClCompile Include="Views\MemoryListItem.xaml.cpp" />
     <ClCompile Include="Views\OperatorsPanel.xaml.cpp" />
     <ClCompile Include="Controls\SupplementaryItemsControl.cpp">
@@ -386,9 +382,6 @@
     <ClInclude Include="Converters\BitFlipAutomationNameConverter.h">
       <Filter>Converters</Filter>
     </ClInclude>
-    <ClInclude Include="Common\TitleBarHelper.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="Controls\CalculationResultAutomationPeer.h">
       <Filter>Controls</Filter>
     </ClInclude>
@@ -398,7 +391,6 @@
     <ClInclude Include="Views\StateTriggers\AspectRatioTrigger.h">
       <Filter>Views\StateTriggers</Filter>
     </ClInclude>
-    <ClInclude Include="Views\TitleBar.xaml.h" />
     <ClInclude Include="Views\MemoryListItem.xaml.h" />
     <ClInclude Include="Views\OperatorsPanel.xaml.h" />
     <ClInclude Include="Controls\SupplementaryItemsControl.h">
@@ -464,15 +456,13 @@
     <Page Include="Views\DateCalculator.xaml">
       <Filter>Views</Filter>
     </Page>
-    <Page Include="Views\TitleBar.xaml">
-      <Filter>Views</Filter>
-    </Page>
     <Page Include="Views\MemoryListItem.xaml">
       <Filter>Views</Filter>
     </Page>
     <Page Include="Views\OperatorsPanel.xaml">
       <Filter>Views</Filter>
     </Page>
+    <Page Include="Views\TitleBar.xaml" />
   </ItemGroup>
   <ItemGroup>
     <PRIResource Include="Resources\en-US\CEngineStrings.resw">
