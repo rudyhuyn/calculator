@@ -102,9 +102,9 @@ void MainPage::OnNavigatedTo(NavigationEventArgs^ e)
     else
     {
         ApplicationDataContainer^ localSettings = ApplicationData::Current->LocalSettings;
-        if (localSettings->Values->HasKey(ApplicationViewModelProperties::Mode))
+        if (localSettings->Values->HasKey(ApplicationViewModel::ModePropertyName))
         {
-            initialMode = NavCategory::Deserialize(localSettings->Values->Lookup(ApplicationViewModelProperties::Mode));
+            initialMode = NavCategory::Deserialize(localSettings->Values->Lookup(ApplicationViewModel::ModePropertyName));
         }
     }
 
@@ -119,7 +119,8 @@ void MainPage::WindowSizeChanged(_In_ Platform::Object^ /*sender*/, _In_ Windows
 
 void MainPage::OnAppPropertyChanged(_In_ Platform::Object^ sender, _In_ Windows::UI::Xaml::Data::PropertyChangedEventArgs^ e)
 {
-    if (e->PropertyName->Equals(ApplicationViewModelProperties::Mode))
+    String^ propertyName = e->PropertyName;
+    if (propertyName == ApplicationViewModel::ModePropertyName)
     {
         ViewMode newValue = m_model->Mode;
         ViewMode previousMode = m_model->PreviousMode;
@@ -182,7 +183,7 @@ void MainPage::OnAppPropertyChanged(_In_ Platform::Object^ sender, _In_ Windows:
         UpdateViewState();
         SetDefaultFocus();
     }
-    else if (e->PropertyName->Equals(ApplicationViewModelProperties::CategoryName))
+    else if (propertyName == ApplicationViewModel::CategoryNamePropertyName)
     {
         SetHeaderAutomationName();
         AnnounceCategoryName();
