@@ -12,6 +12,7 @@ using namespace Windows::ApplicationModel;
 using namespace Windows::ApplicationModel::Core;
 using namespace Windows::Foundation;
 using namespace Windows::UI;
+using namespace Windows::UI::Core;
 using namespace Windows::UI::ViewManagement;
 using namespace Windows::UI::Xaml;
 using namespace Windows::UI::Xaml::Media;
@@ -47,8 +48,8 @@ namespace CalculatorApp
         });
 
         m_colorValuesChangedToken = m_uiSettings->ColorValuesChanged += ref new TypedEventHandler<UISettings^, Object^>(this, &TitleBar::ColorValuesChanged);
-        m_accessibilitySettings->HighContrastChanged += ref new Windows::Foundation::TypedEventHandler<Windows::UI::ViewManagement::AccessibilitySettings ^, Platform::Object ^>(this, &CalculatorApp::TitleBar::OnHighContrastChanged);
-
+        m_accessibilitySettingsToken = m_accessibilitySettings->HighContrastChanged += ref new Windows::Foundation::TypedEventHandler<AccessibilitySettings ^, Object ^>(this, &CalculatorApp::TitleBar::OnHighContrastChanged);
+        m_windowActivatedToken = Window::Current->Activated += ref new Windows::UI::Xaml::WindowActivatedEventHandler(this, &CalculatorApp::TitleBar::OnWindowActivated);
         //Set properties
         LayoutRoot->Height = m_coreTitleBar->Height;
         SetTitleBarControlColors();
@@ -66,6 +67,10 @@ namespace CalculatorApp
         m_visibilityChangedToken.Value = 0;
         m_uiSettings->ColorValuesChanged -= m_colorValuesChangedToken;
         m_colorValuesChangedToken.Value = 0;
+        m_accessibilitySettings->HighContrastChanged -= m_accessibilitySettingsToken;
+        m_accessibilitySettingsToken.Value = 0;
+        Window::Current->Activated -= m_windowActivatedToken;
+        m_windowActivatedToken.Value = 0;
     }
 
     void TitleBar::SetTitleBarExtenView()
@@ -99,7 +104,9 @@ namespace CalculatorApp
 
     void TitleBar::ColorValuesChanged(_In_ UISettings^ /*sender*/, _In_ Object^ /*e*/)
     {
-        SetTitleBarControlColors();
+        Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]() {
+            SetTitleBarControlColors();
+        }));
     }
 
     void TitleBar::SetTitleBarControlColors()
@@ -144,9 +151,17 @@ namespace CalculatorApp
 
 }
 
-void CalculatorApp::TitleBar::OnHighContrastChanged(_In_ Windows::UI::ViewManagement::AccessibilitySettings ^ /*sender*/, _In_ Platform::Object ^ /*args*/)
+void CalculatorApp::TitleBar::OnHighContrastChanged(_In_ AccessibilitySettings ^ /*sender*/, _In_ Object ^ /*args*/)
 {
-    SetTitleBarControlColors();
-    SetTitleBarExtenView();
-    SetTitleBarVisibility();
+    Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]() {
+        SetTitleBarControlColors();
+        SetTitleBarExtenView();
+        SetTitleBarVisibility();
+    }));
+}
+
+
+void CalculatorApp::TitleBar::OnWindowActivated(_In_ Object ^ /*sender*/, _In_ WindowActivatedEventArgs ^e)
+{
+    VisualStateManager::GoToState(this, e->WindowActivationState == CoreWindowActivationState::Deactivated ? L"WindowNotFocused" : L"WindowFocused", false);
 }

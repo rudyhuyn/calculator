@@ -7,6 +7,16 @@
     <Grid x:Name="LayoutRoot"
           Height="32"
           HorizontalAlignment="Stretch">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="WindowFocusStates">
+                <VisualState x:Name="WindowFocused"/>
+                <VisualState x:Name="WindowNotFocused">
+                    <VisualState.Setters>
+                        <Setter Target="AppName.Foreground" Value="{ThemeResource SystemControlForegroundChromeDisabledLowBrush}"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <TextBlock x:Name="AppName"
                    x:Uid="AppName"
                    Margin="12,0,12,0"

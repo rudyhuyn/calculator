@@ -28,11 +28,14 @@ namespace CalculatorApp
         void SetTitleBarExtenView();
         void ColorValuesChanged(_In_ Windows::UI::ViewManagement::UISettings^ sender, _In_ Platform::Object^ e);
         void OnHighContrastChanged(Windows::UI::ViewManagement::AccessibilitySettings ^sender, Platform::Object ^args);
+        void OnWindowActivated(Platform::Object ^sender, Windows::UI::Core::WindowActivatedEventArgs ^e);
 
         Platform::Agile<Windows::ApplicationModel::Core::CoreApplicationViewTitleBar^> m_coreTitleBar;
         Windows::Foundation::EventRegistrationToken m_layoutChangedToken;
         Windows::Foundation::EventRegistrationToken m_visibilityChangedToken;
         Windows::Foundation::EventRegistrationToken m_colorValuesChangedToken;
+        Windows::Foundation::EventRegistrationToken m_windowActivatedToken;
+        Windows::Foundation::EventRegistrationToken m_accessibilitySettingsToken;
         Windows::UI::ViewManagement::UISettings^ m_uiSettings;
         Windows::UI::ViewManagement::AccessibilitySettings^ m_accessibilitySettings;
     };
