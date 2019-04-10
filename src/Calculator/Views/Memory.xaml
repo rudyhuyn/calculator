@@ -66,7 +66,7 @@
                         <AdaptiveTrigger MinWindowWidth="560"/>
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
-                        <Setter Target="MemoryPanel.(Grid.Row)" Value="1"/>
+                        <Setter Target="MemoryPanel.(Grid.Row)" Value="0"/>
                         <Setter Target="MemoryPanel.(Grid.RowSpan)" Value="2"/>
                         <Setter Target="MemoryListView.Padding" Value="0"/>
                         <Setter Target="BackgroundShade.Visibility" Value="Collapsed"/>

@@ -102,7 +102,7 @@
                         <AdaptiveTrigger MinWindowWidth="560"/>
                     </VisualState.StateTriggers>
                     <VisualState.Setters>
-                        <Setter Target="HistoryListRootGrid.(Grid.Row)" Value="1"/>
+                        <Setter Target="HistoryListRootGrid.(Grid.Row)" Value="0"/>
                         <Setter Target="HistoryListRootGrid.(Grid.RowSpan)" Value="2"/>
                         <Setter Target="HistoryListView.Padding" Value="0"/>
                         <Setter Target="BackgroundShade.Visibility" Value="Collapsed"/>

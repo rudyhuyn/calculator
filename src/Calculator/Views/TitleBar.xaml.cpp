@@ -53,7 +53,7 @@ namespace CalculatorApp
         //Set properties
         LayoutRoot->Height = m_coreTitleBar->Height;
         SetTitleBarControlColors();
-        SetTitleBarExtenView();
+        SetTitleBarExtendView();
         SetTitleBarVisibility();
         SetTitleBarPadding();
     }
@@ -73,7 +73,7 @@ namespace CalculatorApp
         m_windowActivatedToken.Value = 0;
     }
 
-    void TitleBar::SetTitleBarExtenView()
+    void TitleBar::SetTitleBarExtendView()
     {
         m_coreTitleBar->ExtendViewIntoTitleBar = !m_accessibilitySettings->HighContrast;
     }
@@ -149,19 +149,17 @@ namespace CalculatorApp
         }
     }
 
-}
+    void TitleBar::OnHighContrastChanged(_In_ AccessibilitySettings ^ /*sender*/, _In_ Object ^ /*args*/)
+    {
+        Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]() {
+            SetTitleBarControlColors();
+            SetTitleBarExtendView();
+            SetTitleBarVisibility();
+        }));
+    }
 
-void CalculatorApp::TitleBar::OnHighContrastChanged(_In_ AccessibilitySettings ^ /*sender*/, _In_ Object ^ /*args*/)
-{
-    Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([this]() {
-        SetTitleBarControlColors();
-        SetTitleBarExtenView();
-        SetTitleBarVisibility();
-    }));
-}
-
-
-void CalculatorApp::TitleBar::OnWindowActivated(_In_ Object ^ /*sender*/, _In_ WindowActivatedEventArgs ^e)
-{
-    VisualStateManager::GoToState(this, e->WindowActivationState == CoreWindowActivationState::Deactivated ? L"WindowNotFocused" : L"WindowFocused", false);
+    void TitleBar::OnWindowActivated(_In_ Object ^ /*sender*/, _In_ WindowActivatedEventArgs ^e)
+    {
+        VisualStateManager::GoToState(this, e->WindowActivationState == CoreWindowActivationState::Deactivated ? L"WindowNotFocused" : L"WindowFocused", false);
+    }
 }
