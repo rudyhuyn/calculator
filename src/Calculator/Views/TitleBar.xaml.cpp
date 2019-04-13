@@ -160,6 +160,6 @@ namespace CalculatorApp
 
     void TitleBar::OnWindowActivated(_In_ Object ^ /*sender*/, _In_ WindowActivatedEventArgs ^e)
     {
-        VisualStateManager::GoToState(this, e->WindowActivationState == CoreWindowActivationState::Deactivated ? L"WindowNotFocused" : L"WindowFocused", false);
+        VisualStateManager::GoToState(this, e->WindowActivationState == CoreWindowActivationState::Deactivated ? WindowNotFocused->Name : WindowFocused->Name, false);
     }
 }
