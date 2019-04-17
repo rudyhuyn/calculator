@@ -36,11 +36,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <!--
-                This row has a min height of 3 for the SystemFocusVisuals,
-                otherwise the focus rectangles render under the title bar controls.
-            -->
-            <RowDefinition Height="Auto" MinHeight="3"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
