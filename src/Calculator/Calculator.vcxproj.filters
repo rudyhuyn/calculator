@@ -307,6 +307,7 @@
     <ClCompile Include="Controls\HorizontalNoOverflowStackPanel.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="Views\TitleBar.xaml.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -405,6 +406,7 @@
     <ClInclude Include="Controls\HorizontalNoOverflowStackPanel.h">
       <Filter>Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Views\TitleBar.xaml.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
@@ -469,7 +471,9 @@
     <Page Include="Views\OperatorsPanel.xaml">
       <Filter>Views</Filter>
     </Page>
-    <Page Include="Views\TitleBar.xaml" />
+    <Page Include="Views\TitleBar.xaml">
+      <Filter>Views</Filter>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <PRIResource Include="Resources\en-US\CEngineStrings.resw">
