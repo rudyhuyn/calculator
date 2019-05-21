@@ -302,7 +302,8 @@ void CCalcEngine::ProcessCommandWorker(WPARAM wParam)
     {
         m_bNoPrevEqu = true;
         m_bChangeOp = false;
-        m_nPrevOpCode = m_nOpCode = 0;
+        m_nPrevOpCode = m_nOpCode;
+        m_nOpCode = (INT)wParam;
 
         /* Functions are unary operations.                            */
         /* If the last thing done was an operator, m_currentVal was cleared. */
@@ -493,9 +494,28 @@ void CCalcEngine::ProcessCommandWorker(WPARAM wParam)
                         m_HistoryCollector.AddBinOpToHistory(m_nOpCode, false);
                         m_HistoryCollector.AddOpndToHistory(m_numberString, m_currentVal); // Adding the repeated last op to history
                     }
+                    else if (m_nOpCode == IDC_SIGN || IsUnaryOpCode(m_nOpCode))
+                    {
+                        m_HistoryCollector.AddUnaryOpToHistory(m_nOpCode, m_bInv, m_angletype);
+                    }
                 }
                 // Do the current or last operation.
-                m_currentVal = DoOperation(m_nOpCode, m_currentVal, m_lastVal);
+                if (!m_bNoPrevEqu && (m_nOpCode == IDC_SIGN || IsUnaryOpCode(m_nOpCode)))
+                {
+                    if (m_nOpCode == IDC_SIGN)
+                    {
+                        m_currentVal = -m_currentVal;
+                    }
+                    else
+                    {
+                        m_currentVal = SciCalcFunctions(m_currentVal, (DWORD)m_nOpCode);
+                    }
+                    m_holdVal = m_currentVal;
+                }
+                else
+                {
+                    m_currentVal = DoOperation(m_nOpCode, m_currentVal, m_lastVal);
+                }
                 m_nPrevOpCode = m_nOpCode;
                 m_lastVal = m_currentVal;
 
@@ -694,7 +714,11 @@ void CCalcEngine::ProcessCommandWorker(WPARAM wParam)
             }
             break;
         }
-
+        else
+        {
+            m_nOpCode = IDC_SIGN;
+            m_bNoPrevEqu = true;
+        }
         // Doing +/- while in Record mode is not a unary operation
         if (IsBinOpCode(m_nLastCom))
         {
@@ -707,7 +731,6 @@ void CCalcEngine::ProcessCommandWorker(WPARAM wParam)
         }
 
         m_currentVal = -(m_currentVal);
-
         DisplayNum();
         m_HistoryCollector.AddUnaryOpToHistory(IDC_SIGN, m_bInv, m_angletype);
     }
