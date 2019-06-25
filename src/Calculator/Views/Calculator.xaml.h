@@ -13,6 +13,7 @@
 #include "Controls/OverflowTextBlock.h"
 #include "Controls/OperatorPanelListView.h"
 #include "Controls/OperatorPanelButton.h"
+#include "Controls/EquationTextBox.h"
 #include "CalcViewModel/HistoryViewModel.h"
 #include "Views/CalculatorProgrammerDisplayPanel.xaml.h"
 #include "Views/CalculatorProgrammerOperators.xaml.h"
