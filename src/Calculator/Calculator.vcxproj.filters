@@ -475,6 +475,9 @@
     <Page Include="Views\OperatorsPanel.xaml">
       <Filter>Views</Filter>
     </Page>
+    <Page Include="Views\TitleBar.xaml">
+      <Filter>Views</Filter>
+    </Page>
     <Page Include="Views\GraphingCalculator\EquationInputArea.xaml">
       <Filter>Views\GraphingCalculator</Filter>
     </Page>
@@ -1528,5 +1531,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Calculator.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="$(GraphingImplDll)" />
+    <CopyFileToFolders Include="$(GraphingEngineDll)" />
   </ItemGroup>
 </Project>
