@@ -178,8 +178,7 @@
                                            Grid.Row="2"
                                            HorizontalAlignment="Right"/>
                             </ScrollViewer>
-                            <Border Background="{ThemeResource AppChromeAcrylicHostBackdropMediumLowBrush}"
-                                    Grid.Column="0">
+                            <Border Grid.Column="0">
                                 <Button x:Name="ScrollLeft"
                                     x:Uid="scrollLeft"
                                     Margin="0,3,0,0"
@@ -192,8 +191,7 @@
                                           Glyph="&#xE26C;"/>
                                 </Button>
                             </Border>
-                            <Border Background="{ThemeResource AppChromeAcrylicHostBackdropMediumLowBrush}"
-                                    Grid.Column="2">
+                            <Border Grid.Column="2">
                                 <Button x:Name="ScrollRight"
                                     x:Uid="scrollRight"
                                     Margin="0,3,0,0"
