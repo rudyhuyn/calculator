@@ -30,7 +30,7 @@ Prerequisites:
 
   ![Visual Studio Installation Screenshot](docs/Images/VSInstallationScreenshot.png)
 - Install the [XAML Styler](https://marketplace.visualstudio.com/items?itemName=TeamXavalon.XAMLStyler) Visual Studio extension.
-
+- Install [Windows Application Driver](https://github.com/microsoft/WinAppDriver/releases/tag/v1.1) to run automated UI tests.
 - Get the code:
     ```
     git clone https://github.com/Microsoft/calculator.git
