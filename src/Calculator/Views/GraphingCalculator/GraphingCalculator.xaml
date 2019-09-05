@@ -28,6 +28,16 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="12"/>
         </Style>
+
+        <Style x:Key="AccentCalcButtonStyle"
+                   BasedOn="{StaticResource SymbolOperatorButtonStyle}"
+                   TargetType="controls:CalculatorButton">
+            <Setter Property="HoverBackground" Value="{ThemeResource AppControlHighlightAccentRevealBackgroundBrush}"/>
+            <Setter Property="HoverForeground" Value="{ThemeResource SystemControlHighlightAltAltHighBrush}"/>
+            <Setter Property="PressBackground" Value="{ThemeResource AppControlBackgroundListAccentHighRevealBackgroundBrush}"/>
+            <Setter Property="PressForeground" Value="{ThemeResource SystemControlHighlightAltAltHighBrush}"/>
+        </Style>
+
         <converters:BooleanToVisibilityConverter x:Name="BooleanToVisibilityConverter"/>
         <converters:BooleanToVisibilityNegationConverter x:Name="BooleanToVisibilityNegationConverter"/>
     </UserControl.Resources>

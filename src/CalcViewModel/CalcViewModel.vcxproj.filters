@@ -1,14 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{1daab7c4-63f6-4266-a259-f34acad66d09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Common\Automation">
+      <UniqueIdentifier>{8d4edf06-c312-4312-978a-b6c2beb8295a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DataLoaders">
+      <UniqueIdentifier>{0184f727-b8aa-4af8-a699-63f1b56e7853}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GraphingCalculator">
+      <UniqueIdentifier>{cf7dca32-9727-4f98-83c3-1c0ca7dd1e0c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
     <ClCompile Include="ApplicationViewModel.cpp" />
     <ClCompile Include="DateCalculatorViewModel.cpp" />
-    <ClCompile Include="GraphingCalculator\EquationViewModel.cpp" />
-    <ClCompile Include="GraphingCalculator\GraphingCalculatorViewModel.cpp" />
     <ClCompile Include="HistoryItemViewModel.cpp" />
     <ClCompile Include="HistoryViewModel.cpp" />
     <ClCompile Include="MemoryItemViewModel.cpp" />
-    <ClCompile Include="pch.cpp" />
     <ClCompile Include="StandardCalculatorViewModel.cpp" />
     <ClCompile Include="UnitConverterViewModel.cpp" />
     <ClCompile Include="Common\AppResourceProvider.cpp">
@@ -82,16 +94,14 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="targetver.h" />
     <ClInclude Include="ApplicationViewModel.h" />
     <ClInclude Include="DateCalculatorViewModel.h" />
-    <ClInclude Include="GraphingCalculator\EquationViewModel.h" />
-    <ClInclude Include="GraphingCalculator\GraphingCalculatorViewModel.h" />
     <ClInclude Include="HistoryItemViewModel.h" />
     <ClInclude Include="HistoryViewModel.h" />
     <ClInclude Include="MemoryItemViewModel.h" />
-    <ClInclude Include="pch.h" />
     <ClInclude Include="StandardCalculatorViewModel.h" />
-    <ClInclude Include="targetver.h" />
     <ClInclude Include="UnitConverterViewModel.h" />
     <ClInclude Include="Common\AlwaysSelectedCollectionView.h">
       <Filter>Common</Filter>
@@ -206,7 +216,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DataLoaders\DefaultFromToCurrency.json" />
+    <None Include="DataLoaders\DefaultFromToCurrency.json">
+      <Filter>DataLoaders</Filter>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
