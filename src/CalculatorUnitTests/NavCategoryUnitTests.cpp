@@ -291,26 +291,10 @@ namespace CalculatorUnitTests
     void NavCategoryUnitTests::GetPosition()
     {
         // Position is the 1-based ordering of modes
-        ViewMode orderedModes[] = {
-            ViewMode::Standard,
-            ViewMode::Scientific,
-            ViewMode::Programmer,
-            ViewMode::Date,
-            ViewMode::Graphing,
-            ViewMode::Currency,
-            ViewMode::Volume,
-            ViewMode::Length,
-            ViewMode::Weight,
-            ViewMode::Temperature,
-            ViewMode::Energy,
-            ViewMode::Area,
-            ViewMode::Speed,
-            ViewMode::Time,
-            ViewMode::Power,
-            ViewMode::Data,
-            ViewMode::Pressure,
-            ViewMode::Angle
-        };
+        vector<ViewMode> orderedModes = { ViewMode::Standard, ViewMode::Scientific, ViewMode::Programmer, ViewMode::Date,     ViewMode::Graphing,
+                                          ViewMode::Currency, ViewMode::Volume,   ViewMode::Length,     ViewMode::Weight,     ViewMode::Temperature,
+                                          ViewMode::Energy,   ViewMode::Area,     ViewMode::Speed,      ViewMode::Time,       ViewMode::Power,
+                                          ViewMode::Data,     ViewMode::Pressure, ViewMode::Angle };
 
         auto orderedModesSize = size(orderedModes);
         for (size_t pos = 1; pos <= orderedModesSize; pos++)
