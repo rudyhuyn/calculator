@@ -29,21 +29,16 @@ namespace CalculatorApp
         virtual void OnLaunched(Windows::ApplicationModel::Activation::LaunchActivatedEventArgs ^ args) override;
         virtual void OnActivated(Windows::ApplicationModel::Activation::IActivatedEventArgs ^ args) override;
 
-        internal : static bool IsAnimationEnabled();
         static Platform::String ^ GetAppViewState();
-        static float GetAppWindowHeight();
         void RemoveWindow(_In_ WindowFrameService ^ frameService);
         void RemoveSecondaryWindow(_In_ WindowFrameService ^ frameService);
 
     private:
         static Windows::UI::Xaml::Controls::Frame ^ CreateFrame();
-        static void SetMinWindowSizeAndActivate(Windows::UI::Xaml::Controls::Frame ^ rootFrame, Windows::Foundation::Size minWindowSize);
 
         void OnAppLaunch(Windows::ApplicationModel::Activation::IActivatedEventArgs ^ args, Platform::String ^ argument);
         void DismissedEventHandler(Windows::ApplicationModel::Activation::SplashScreen ^ sender, Platform::Object ^ e);
-        void RegisterDependencyProperties();
         void OnSuspending(Platform::Object ^ sender, Windows::ApplicationModel::SuspendingEventArgs ^ args);
-
 
         class SafeFrameWindowCreation final
         {
@@ -87,9 +82,5 @@ namespace CalculatorApp
         void RemoveWindowFromMap(int viewId);
         int m_mainViewId;
         bool m_preLaunched;
-
-        Windows::UI::Xaml::Controls::Primitives::Popup ^ m_aboutPopup;
-
-        static bool m_isAnimationEnabled;
     };
 }

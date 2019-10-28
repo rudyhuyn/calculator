@@ -44,7 +44,6 @@ using namespace Windows::UI::Xaml::Media;
 using namespace Windows::UI::Xaml::Media::Animation;
 using namespace Windows::UI::Xaml::Navigation;
 using namespace Windows::ApplicationModel::Activation;
-
 namespace CalculatorApp
 {
     namespace ApplicationResourceKeys
@@ -63,8 +62,7 @@ App::App()
     InitializeComponent();
 
     m_preLaunched = false;
-
-    RegisterDependencyProperties();
+    NarratorNotifier::RegisterDependencyProperties();
 
     // TODO: MSFT 14645325: Set this directly from XAML.
     // Currently this is bugged so the property is only respected from code-behind.
@@ -84,34 +82,21 @@ App::App()
 #endif
 }
 
-bool App::m_isAnimationEnabled = true;
-
-/// <summary>
-/// Return True if animation is enabled by user setting.
-/// </summary>
-bool App::IsAnimationEnabled()
-{
-    return App::m_isAnimationEnabled;
-}
-
 /// <summary>
 /// Return the current application view state. The value
 /// will match one of the constants in the ViewState namespace.
 /// </summary>
 String ^ App::GetAppViewState()
 {
-    String ^ newViewState;
     CoreWindow ^ window = CoreWindow::GetForCurrentThread();
-    if ((window->Bounds.Width >= 560) && (window->Bounds.Height >= 356))
+    if (window->Bounds.Width >= 560 && window->Bounds.Height >= 356)
     {
-        newViewState = ViewState::DockedView;
+        return ViewState::DockedView;
     }
     else
     {
-        newViewState = ViewState::Snap;
+        return ViewState::Snap;
     }
-
-    return newViewState;
 }
 
 void App::AddWindowToMap(_In_ WindowFrameService ^ frameService)
@@ -171,6 +156,16 @@ task<void> App::SetupJumpList()
 {
     try
     {
+        // Only recreate the jump list if the app was updated.
+        auto currentAppVersion = Package::Current->Id->Version;
+        unsigned long long currentAppVersionId =
+            (((unsigned long long)currentAppVersion.Major) >> 32) + (((unsigned long long)currentAppVersion.Minor) >> 16) + currentAppVersion.Build; 
+        auto localSettings = ApplicationData::Current->LocalSettings;
+        if (localSettings->Values->HasKey(L"JumpListVersion") && currentAppVersionId == static_cast<unsigned long long>(localSettings->Values->Lookup(L"JumpListVersion")))
+        {
+            return;
+        }
+
         auto calculatorOptions = NavCategoryGroup::CreateCalculatorCategory();
 
         auto jumpList = co_await JumpList::LoadCurrentAsync();
@@ -188,6 +183,7 @@ task<void> App::SetupJumpList()
         }
 
         co_await jumpList->SaveAsync();
+        localSettings->Values->Insert(L"JumpListVersion", currentAppVersionId);
     }
     catch (...)
     {
@@ -239,9 +235,6 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
     //    }
     //#endif
 
-    auto userSettings = ref new Windows::UI::ViewManagement::UISettings();
-    m_isAnimationEnabled = userSettings->AnimationsEnabled;
-
     args->SplashScreen->Dismissed += ref new TypedEventHandler<SplashScreen ^, Object ^>(this, &App::DismissedEventHandler);
 
     auto rootFrame = dynamic_cast<Frame ^>(Window::Current->Content);
@@ -250,20 +243,6 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
     float minWindowWidth = static_cast<float>(static_cast<double>(this->Resources->Lookup(ApplicationResourceKeys::AppMinWindowWidth)));
     float minWindowHeight = static_cast<float>(static_cast<double>(this->Resources->Lookup(ApplicationResourceKeys::AppMinWindowHeight)));
     Size minWindowSize = SizeHelper::FromDimensions(minWindowWidth, minWindowHeight);
-
-    ApplicationView ^ appView = ApplicationView::GetForCurrentView();
-    ApplicationDataContainer ^ localSettings = ApplicationData::Current->LocalSettings;
-    // For very first launch, set the size of the calc as size of the default standard mode
-    if (!localSettings->Values->HasKey(L"VeryFirstLaunch"))
-    {
-        localSettings->Values->Insert(ref new String(L"VeryFirstLaunch"), false);
-        appView->SetPreferredMinSize(minWindowSize);
-        appView->TryResizeView(minWindowSize);
-    }
-    else
-    {
-        appView->PreferredLaunchWindowingMode = ApplicationViewWindowingMode::Auto;
-    }
 
     // Do not repeat app initialization when the Window already has content,
     // just ensure that the window is active
@@ -283,6 +262,20 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
             }
         }
 
+        // For very first launch, set the size of the calc as size of the default standard mode
+        ApplicationView ^ appView = ApplicationView::GetForCurrentView();
+        ApplicationDataContainer ^ localSettings = ApplicationData::Current->LocalSettings;
+        if (!localSettings->Values->HasKey(L"VeryFirstLaunch"))
+        {
+            localSettings->Values->Insert(L"VeryFirstLaunch", false);
+            appView->SetPreferredMinSize(minWindowSize);
+            appView->TryResizeView(minWindowSize);
+        }
+        else
+        {
+            appView->PreferredLaunchWindowingMode = ApplicationViewWindowingMode::Auto;
+        }
+
         // Create a Frame to act as the navigation context
         rootFrame = App::CreateFrame();
 
@@ -296,8 +289,11 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
             throw std::bad_exception();
         }
 
-        SetMinWindowSizeAndActivate(rootFrame, minWindowSize);
-        m_mainViewId = ApplicationView::GetForCurrentView()->Id;
+        // Place the frame in the current Window
+        Window::Current->Content = rootFrame;
+        Window::Current->Activate();
+
+        m_mainViewId = appView->Id;
         AddWindowToMap(WindowFrameService::CreateNewWindowFrameService(rootFrame, false, weak));
     }
     else
@@ -315,55 +311,59 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
                 newCoreAppView->Dispatcher->RunAsync(
                     CoreDispatcherPriority::Normal, ref new DispatchedHandler([args, argument, minWindowSize, weak]() {
                         auto that = weak.Resolve<App>();
-                        if (that != nullptr)
+                        if (that == nullptr)
                         {
-                            auto rootFrame = App::CreateFrame();
-                            SetMinWindowSizeAndActivate(rootFrame, minWindowSize);
+                            return;
+                        }
+                        auto rootFrame = App::CreateFrame();
+                        auto newAppView = ApplicationView::GetForCurrentView();
+                        newAppView->SetPreferredMinSize(minWindowSize);
 
-                            if (!rootFrame->Navigate(MainPage::typeid, argument))
+                        // Place the frame in the current Window
+                        Window::Current->Content = rootFrame;
+                        Window::Current->Activate();
+
+                        if (!rootFrame->Navigate(MainPage::typeid, argument))
+                        {
+                            // We couldn't navigate to the main page, kill the app so we have a good
+                            // stack to debug
+                            throw std::bad_exception();
+                        }
+
+                        auto frameService = WindowFrameService::CreateNewWindowFrameService(rootFrame, true, weak);
+                        that->AddWindowToMap(frameService);
+
+
+                        ActivationViewSwitcher ^ activationViewSwitcher;
+                        auto activateEventArgs = dynamic_cast<IViewSwitcherProvider ^>(args);
+                        if (activateEventArgs != nullptr)
+                        {
+                            activationViewSwitcher = activateEventArgs->ViewSwitcher;
+                        }
+
+                        auto safeFrameServiceCreation = std::make_shared<SafeFrameWindowCreation>(frameService, that);
+                        if (activationViewSwitcher != nullptr)
+                        {
+                            activationViewSwitcher->ShowAsStandaloneAsync(newAppView->Id, ViewSizePreference::Default);
+                            safeFrameServiceCreation->SetOperationSuccess(true);
+                        }
+                        else
+                        {
+                            auto activatedEventArgs = dynamic_cast<IApplicationViewActivatedEventArgs ^>(args);
+                            if (activatedEventArgs != nullptr && activatedEventArgs->CurrentlyShownApplicationViewId != 0)
                             {
-                                // We couldn't navigate to the main page, kill the app so we have a good
-                                // stack to debug
-                                throw std::bad_exception();
-                            }
-
-                            auto frameService = WindowFrameService::CreateNewWindowFrameService(rootFrame, true, weak);
-                            that->AddWindowToMap(frameService);
-
-                            auto dispatcher = CoreWindow::GetForCurrentThread()->Dispatcher;
-                            auto safeFrameServiceCreation = std::make_shared<SafeFrameWindowCreation>(frameService, that);
-                            int newWindowId = ApplicationView::GetApplicationViewIdForWindow(CoreWindow::GetForCurrentThread());
-
-                            ActivationViewSwitcher ^ activationViewSwitcher;
-                            auto activateEventArgs = dynamic_cast<IViewSwitcherProvider ^>(args);
-                            if (activateEventArgs != nullptr)
-                            {
-                                activationViewSwitcher = activateEventArgs->ViewSwitcher;
-                            }
-
-                            if (activationViewSwitcher != nullptr)
-                            {
-                                activationViewSwitcher->ShowAsStandaloneAsync(newWindowId, ViewSizePreference::Default);
-                                safeFrameServiceCreation->SetOperationSuccess(true);
-                            }
-                            else
-                            {
-                                auto activatedEventArgs = dynamic_cast<IApplicationViewActivatedEventArgs ^>(args);
-                                if ((activatedEventArgs != nullptr) && (activatedEventArgs->CurrentlyShownApplicationViewId != 0))
-                                {
-                                    create_task(ApplicationViewSwitcher::TryShowAsStandaloneAsync(
-                                                    frameService->GetViewId(),
-                                                    ViewSizePreference::Default,
-                                                    activatedEventArgs->CurrentlyShownApplicationViewId,
-                                                    ViewSizePreference::Default))
-                                        .then(
-                                            [safeFrameServiceCreation](bool viewShown) {
-                                                // SafeFrameServiceCreation is used to automatically remove the frame
-                                                // from the list of frames if something goes bad.
-                                                safeFrameServiceCreation->SetOperationSuccess(viewShown);
-                                            },
-                                            task_continuation_context::use_current());
-                                }
+                                create_task(ApplicationViewSwitcher::TryShowAsStandaloneAsync(
+                                                frameService->GetViewId(),
+                                                ViewSizePreference::Default,
+                                                activatedEventArgs->CurrentlyShownApplicationViewId,
+                                                ViewSizePreference::Default))
+                                    .then(
+                                        [safeFrameServiceCreation](bool viewShown) {
+                                            // SafeFrameServiceCreation is used to automatically remove the frame
+                                            // from the list of frames if something goes bad.
+                                            safeFrameServiceCreation->SetOperationSuccess(viewShown);
+                                        },
+                                        task_continuation_context::use_current());
                             }
                         }
                     }));
@@ -410,18 +410,17 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
                 {
                     // for tablet mode: since system view activation policy is disabled so do ShowAsStandaloneAsync if activationViewSwitcher exists in
                     // activationArgs
-                    ActivationViewSwitcher ^ activationViewSwitcher;
                     auto activateEventArgs = dynamic_cast<IViewSwitcherProvider ^>(args);
                     if (activateEventArgs != nullptr)
                     {
-                        activationViewSwitcher = activateEventArgs->ViewSwitcher;
-                    }
-                    if (activationViewSwitcher != nullptr)
-                    {
-                        auto viewId = safe_cast<IApplicationViewActivatedEventArgs ^>(args)->CurrentlyShownApplicationViewId;
-                        if (viewId != 0)
+                        ActivationViewSwitcher ^ activationViewSwitcher = activateEventArgs->ViewSwitcher;
+                        if (activationViewSwitcher != nullptr)
                         {
-                            activationViewSwitcher->ShowAsStandaloneAsync(viewId);
+                            auto viewId = safe_cast<IApplicationViewActivatedEventArgs ^>(args)->CurrentlyShownApplicationViewId;
+                            if (viewId != 0)
+                            {
+                                activationViewSwitcher->ShowAsStandaloneAsync(viewId);
+                            }
                         }
                     }
                 }
@@ -430,22 +429,6 @@ void App::OnAppLaunch(IActivatedEventArgs ^ args, String ^ argument)
             }
         }
     }
-}
-
-void App::SetMinWindowSizeAndActivate(Frame ^ rootFrame, Size minWindowSize)
-{
-    // SetPreferredMinSize should always be called before Window::Activate
-    ApplicationView ^ appView = ApplicationView::GetForCurrentView();
-    appView->SetPreferredMinSize(minWindowSize);
-
-    // Place the frame in the current Window
-    Window::Current->Content = rootFrame;
-    Window::Current->Activate();
-}
-
-void App::RegisterDependencyProperties()
-{
-    NarratorNotifier::RegisterDependencyProperties();
 }
 
 void App::OnActivated(IActivatedEventArgs ^ args)
@@ -467,11 +450,4 @@ void App::DismissedEventHandler(SplashScreen ^ sender, Object ^ e)
 {
     SetupJumpList();
 }
-
-float App::GetAppWindowHeight()
-{
-    CoreWindow ^ window = CoreWindow::GetForCurrentThread();
-    return window->Bounds.Height;
-}
-
 
