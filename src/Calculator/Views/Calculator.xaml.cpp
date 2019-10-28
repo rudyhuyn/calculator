@@ -7,8 +7,8 @@
 #include "CalcViewModel/Common/TraceLogger.h"
 #include "CalcViewModel/Common/CopyPasteManager.h"
 #include "CalcViewModel/StandardCalculatorViewModel.h"
-#include "CalcViewModel/ViewState.h"
 #include "CalcViewModel/Common/LocalizationSettings.h"
+#include "Common/ViewState.h"
 #include "Memory.xaml.h"
 #include "HistoryList.xaml.h"
 

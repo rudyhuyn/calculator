@@ -478,20 +478,6 @@ void UnitConverterViewModel::OnButtonPressed(Platform::Object ^ parameter)
 
     static const vector<UCM::Command> OPERANDS = { UCM::Command::Zero, UCM::Command::One, UCM::Command::Two,   UCM::Command::Three, UCM::Command::Four,
                                                    UCM::Command::Five, UCM::Command::Six, UCM::Command::Seven, UCM::Command::Eight, UCM::Command::Nine };
-
-    if (find(begin(OPERANDS), end(OPERANDS), command) != OPERANDS.end())
-    {
-        if (m_isInputBlocked)
-        {
-            return;
-        }
-
-        if (m_IsCurrencyCurrentCategory)
-        {
-            StartConversionResultTimer();
-        }
-    }
-
     m_model->SendCommand(command);
 
     TraceLogger::GetInstance().LogConverterInputReceived(Mode);
@@ -998,17 +984,6 @@ void UnitConverterViewModel::OnMaxDigitsReached()
 bool UnitConverterViewModel::UnitsAreValid()
 {
     return UnitFrom != nullptr && !UnitFrom->Abbreviation->IsEmpty() && UnitTo != nullptr && !UnitTo->Abbreviation->IsEmpty();
-}
-
-void UnitConverterViewModel::StartConversionResultTimer()
-{
-    m_conversionResultTaskHelper = make_unique<ConversionResultTaskHelper>(CONVERSION_FINALIZED_DELAY_IN_MS, [this]() {
-        if (UnitsAreValid())
-        {
-            String ^ valueFrom = m_Value1Active ? m_Value1 : m_Value2;
-            String ^ valueTo = m_Value1Active ? m_Value2 : m_Value1;
-        }
-    });
 }
 
 String ^ SupplementaryResult::GetLocalizedAutomationName()

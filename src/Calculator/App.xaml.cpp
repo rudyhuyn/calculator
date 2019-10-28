@@ -12,7 +12,7 @@
 #include "CalcViewModel/Common/Automation/NarratorNotifier.h"
 #include "CalcViewModel/Common/AppResourceProvider.h"
 #include "CalcViewModel/Common/LocalizationSettings.h"
-#include "CalcViewModel/ViewState.h"
+#include "Common/ViewState.h"
 #include "Views/MainPage.xaml.h"
 
 using namespace CalculatorApp;
