@@ -901,21 +901,6 @@ void StandardCalculatorViewModel::OnClearMemoryCommand(Object ^ parameter)
     Announcement = CalculatorAnnouncement::GetMemoryClearedAnnouncement(announcement);
 }
 
-void StandardCalculatorViewModel::OnPinUnpinCommand(Object ^ parameter)
-{
-    SetViewPinnedState(!IsViewPinned());
-}
-
-bool StandardCalculatorViewModel::IsViewPinned()
-{
-    return m_IsCurrentViewPinned;
-}
-
-void StandardCalculatorViewModel::SetViewPinnedState(bool pinned)
-{
-    IsCurrentViewPinned = pinned;
-}
-
 NumbersAndOperatorsEnum StandardCalculatorViewModel::MapCharacterToButtonId(const wchar_t ch, bool& canSendNegate)
 {
     NumbersAndOperatorsEnum mappedValue = NumbersAndOperatorsEnum::None;
@@ -1495,18 +1480,6 @@ void StandardCalculatorViewModel::Recalculate(bool fromHistory)
     }
 }
 
-CommandType StandardCalculatorViewModel::GetSelectedTokenType(_In_ unsigned int tokenPosition)
-{
-    pair<wstring, int> token;
-    shared_ptr<IExpressionCommand> tokenCommand;
-    IFTPlatformException(m_tokens->GetAt(tokenPosition, &token));
-
-    unsigned int tokenCommandIndex = token.second;
-    IFTPlatformException(m_commands->GetAt(tokenCommandIndex, &tokenCommand));
-
-    return tokenCommand->GetCommandType();
-}
-
 bool StandardCalculatorViewModel::IsOpnd(int nOpCode)
 {
     static Command opnd[] = { Command::Command0, Command::Command1, Command::Command2, Command::Command3, Command::Command4,  Command::Command5,
@@ -1691,26 +1664,6 @@ void StandardCalculatorViewModel::UpdateProgrammerPanelDisplay()
 void StandardCalculatorViewModel::SwitchAngleType(NumbersAndOperatorsEnum num)
 {
     OnButtonPressed(num);
-}
-
-NumbersAndOperatorsEnum StandardCalculatorViewModel::ConvertIntegerToNumbersAndOperatorsEnum(unsigned int parameter)
-{
-    NumbersAndOperatorsEnum angletype;
-    switch (parameter)
-    {
-    case 321:
-        angletype = NumbersAndOperatorsEnum::Degree;
-        break;
-    case 322:
-        angletype = NumbersAndOperatorsEnum::Radians;
-        break;
-    case 323:
-        angletype = NumbersAndOperatorsEnum::Grads;
-        break;
-    default:
-        angletype = NumbersAndOperatorsEnum::Degree;
-    };
-    return angletype;
 }
 
 void StandardCalculatorViewModel::UpdateOperand(int pos, String ^ text)
