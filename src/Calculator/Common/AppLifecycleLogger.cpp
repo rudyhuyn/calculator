@@ -3,7 +3,6 @@
 
 #include "pch.h"
 #include "AppLifecycleLogger.h"
-#include <winmeta.h>
 
 using namespace std;
 using namespace winrt;
