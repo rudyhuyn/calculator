@@ -94,15 +94,16 @@ StandardCalculatorViewModel::StandardCalculatorViewModel()
     , m_localizedNoRightParenthesisAddedFormat(nullptr)
 {
     WeakReference calculatorViewModel(this);
+    auto appResourceProvider = AppResourceProvider::GetInstance();
     m_calculatorDisplay.SetCallback(calculatorViewModel);
-    m_expressionAutomationNameFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::CalculatorExpression);
-    m_localizedCalculationResultAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::CalculatorResults);
+    m_expressionAutomationNameFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::CalculatorExpression);
+    m_localizedCalculationResultAutomationFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::CalculatorResults);
     m_localizedCalculationResultDecimalAutomationFormat =
-        AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::CalculatorResults_DecimalSeparator_Announced);
-    m_localizedHexaDecimalAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::HexButton);
-    m_localizedDecimalAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::DecButton);
-    m_localizedOctalAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::OctButton);
-    m_localizedBinaryAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::BinButton);
+        appResourceProvider->GetResourceString(CalculatorResourceKeys::CalculatorResults_DecimalSeparator_Announced);
+    m_localizedHexaDecimalAutomationFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::HexButton);
+    m_localizedDecimalAutomationFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::DecButton);
+    m_localizedOctalAutomationFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::OctButton);
+    m_localizedBinaryAutomationFormat = appResourceProvider->GetResourceString(CalculatorResourceKeys::BinButton);
 
     // Initialize the Automation Name
     CalculationResultAutomationName = GetLocalizedStringFormat(m_localizedCalculationResultAutomationFormat, m_DisplayValue);
@@ -243,7 +244,7 @@ void StandardCalculatorViewModel::SetOpenParenthesisCountNarratorAnnouncement()
     String ^ announcement = LocalizationStringUtil::GetLocalizedNarratorAnnouncement(
         CalculatorResourceKeys::OpenParenthesisCountAutomationFormat,
         m_localizedOpenParenthesisCountChangedAutomationFormat,
-        ref new String(localizedParenthesisCount.data()));
+        StringReference(localizedParenthesisCount.c_str()));
 
     Announcement = CalculatorAnnouncement::GetOpenParenthesisCountChangedAnnouncement(announcement);
 }

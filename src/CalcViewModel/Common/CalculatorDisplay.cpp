@@ -32,7 +32,7 @@ void CalculatorDisplay::SetPrimaryDisplay(_In_ const wstring& displayStringValue
     {
         if (auto calcVM = m_callbackReference.Resolve<ViewModel::StandardCalculatorViewModel>())
         {
-            calcVM->SetPrimaryDisplay(ref new String(displayStringValue.data()), isError);
+            calcVM->SetPrimaryDisplay(StringReference(displayStringValue.data()), isError);
         }
     }
 }
