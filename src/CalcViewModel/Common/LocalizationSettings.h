@@ -292,7 +292,7 @@ namespace CalculatorApp
                         stream << *c;
                     }
                 }
-                return ref new Platform::String(stream.str().data());
+                return ref new Platform::String(stream.str().c_str());
             }
 
             Platform::String ^ GetCalendarIdentifier() const

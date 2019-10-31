@@ -305,11 +305,11 @@ pair<wstring, wstring> CurrencyDataLoader::GetCurrencyRatioEquality(_In_ const U
                 auto roundedFormat = m_ratioFormatter->Format(rounded);
 
                 auto ratioString = LocalizationStringUtil::GetLocalizedString(
-                    m_ratioFormat, digitSymbol, StringReference(unit1.abbreviation.data()), roundedFormat, StringReference(unit2.abbreviation.data()));
+                    m_ratioFormat, digitSymbol, StringReference(unit1.abbreviation.c_str()), roundedFormat, StringReference(unit2.abbreviation.c_str()));
 
                 auto accessibleRatioString =
                     LocalizationStringUtil::GetLocalizedString(
-                    m_ratioFormat, digitSymbol, StringReference(unit1.accessibleName.data()), roundedFormat, StringReference(unit2.accessibleName.data()));
+                    m_ratioFormat, digitSymbol, StringReference(unit1.accessibleName.c_str()), roundedFormat, StringReference(unit2.accessibleName.c_str()));
 
                 return make_pair(ratioString->Data(), accessibleRatioString->Data());
             }
