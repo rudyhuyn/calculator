@@ -214,6 +214,9 @@
     <ClInclude Include="GraphingCalculator\GraphingCalculatorViewModel.h">
       <Filter>GraphingCalculator</Filter>
     </ClInclude>
+    <ClInclude Include="GraphingCalculatorEnums.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json">
