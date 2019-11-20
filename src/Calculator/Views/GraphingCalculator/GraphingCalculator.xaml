@@ -193,42 +193,15 @@
             Grid.Row="1"
             Grid.Column="0">
             <Grid Grid.Row="0" Margin="0,4,0,0">
-                <graphControl:Grapher
-                    Name="GraphingControl"
-                    EquationsSource="{x:Bind ViewModel.Equations, Mode=OneWay}"
-                    ForceProportionalAxes="True"
-                    LosingFocus="GraphingControl_LosingFocus"
-                    LostFocus="GraphingControl_LostFocus"
-                    UseSystemFocusVisuals="True"
-                    VariablesUpdated="GraphingControl_VariablesUpdated">
+                <graphControl:Grapher Name="GraphingControl"
+                                      ForceProportionalAxes="True"
+                                      LosingFocus="GraphingControl_LosingFocus"
+                                      LostFocus="GraphingControl_LostFocus"
+                                      UseSystemFocusVisuals="True"
+                                      VariablesUpdated="GraphingControl_VariablesUpdated">
                     <graphControl:Grapher.Background>
                         <SolidColorBrush Color="White" />
                     </graphControl:Grapher.Background>
-                    <graphControl:Grapher.EquationTemplate>
-                        <DataTemplate x:DataType="vm:EquationViewModel">
-                            <graphControl:Equation
-                                AnalysisError="{x:Bind AnalysisError, Mode=TwoWay}"
-                                Domain="{x:Bind Domain, Mode=TwoWay}"
-                                Expression="{x:Bind Expression, Mode=OneWay}"
-                                HorizontalAsymptotes="{x:Bind HorizontalAsymptotes, Mode=TwoWay}"
-                                InflectionPoints="{x:Bind InflectionPoints, Mode=TwoWay}"
-                                IsAnalysisUpdated="{x:Bind IsAnalysisUpdated, Mode=TwoWay}"
-                                LineColor="{x:Bind LineColor, Mode=OneWay}"
-                                Maxima="{x:Bind Maxima, Mode=TwoWay}"
-                                Minima="{x:Bind Minima, Mode=TwoWay}"
-                                Monotonicity="{x:Bind Monotonicity, Mode=TwoWay}"
-                                ObliqueAsymptotes="{x:Bind ObliqueAsymptotes, Mode=TwoWay}"
-                                Parity="{x:Bind Parity, Mode=TwoWay}"
-                                PeriodicityDirection="{x:Bind PeriodicityDirection, Mode=TwoWay}"
-                                PeriodicityExpression="{x:Bind PeriodicityExpression, Mode=TwoWay}"
-                                Range="{x:Bind Range, Mode=TwoWay}"
-                                TooComplexFeatures="{x:Bind TooComplexFeatures, Mode=TwoWay}"
-                                VerticalAsymptotes="{x:Bind VerticalAsymptotes, Mode=TwoWay}"
-                                XIntercept="{x:Bind XIntercept, Mode=TwoWay}"
-                                YIntercept="{x:Bind YIntercept, Mode=TwoWay}" />
-                        </DataTemplate>
-                    </graphControl:Grapher.EquationTemplate>
-
                 </graphControl:Grapher>
 
                 <StackPanel
@@ -557,25 +530,20 @@
                 <RowDefinition Height="3*" />
             </Grid.RowDefinitions>
 
-            <!--  Ideally the KeyGraphFeaturesPanel should be a frame so that navigation to and from the panel could be handled nicely  -->
-            <local:KeyGraphFeaturesPanel
-                x:Name="KeyGraphFeaturesControl"
-                Grid.RowSpan="2"
-                KeyGraphFeaturesClosed="OnKeyGraphFeaturesClosed"
-                ViewModel="{x:Bind EquationInputAreaControl.EquationVM, Mode=OneWay}"
-                Visibility="{x:Bind IsKeyGraphFeaturesVisible, Mode=OneWay}" />
-            <Grid x:Name="EquationInputAreaGrid" Visibility="{x:Bind IsKeyGraphFeaturesVisible, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="1*" />
-                </Grid.RowDefinitions>
-                <local:EquationInputArea
-                    x:Name="EquationInputAreaControl"
-                    Grid.Row="1"
-                    Margin="0,8,0,0"
-                    Equations="{x:Bind ViewModel.Equations}"
-                    KeyGraphFeaturesVisibilityChanged="OnEquationKeyGraphFeaturesVisibilityChanged" />
-            </Grid>
+            <!-- Ideally the KeyGraphFeaturesPanel should be a frame so that navigation to and from the panel could be handled nicely -->
+            <local:KeyGraphFeaturesPanel x:Name="KeyGraphFeaturesControl"
+                                         Grid.RowSpan="2"
+                                         x:Load="{x:Bind IsKeyGraphFeaturesVisible, Mode=OneWay}"
+                                         KeyGraphFeaturesClosed="OnKeyGraphFeaturesClosed"
+                                         ViewModel="{x:Bind EquationInputAreaControl.EquationVM, Mode=OneWay}"
+                                         Visibility="{x:Bind IsKeyGraphFeaturesVisible, Mode=OneWay}"/>
+
+            <!-- This control should be within a grid that limits the hight to keep the sticky footer functionality from breaking -->
+            <local:EquationInputArea x:Name="EquationInputAreaControl"
+                                     Margin="0,4,0,0"
+                                     Visibility="{x:Bind IsKeyGraphFeaturesVisible, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
+                                     Equations="{x:Bind ViewModel.Equations}"
+                                     KeyGraphFeaturesRequested="OnEquationKeyGraphFeaturesRequested"/>
 
             <Grid
                 x:Name="ButtonContainerGrid"
