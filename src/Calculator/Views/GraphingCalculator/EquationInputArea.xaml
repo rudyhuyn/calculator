@@ -245,42 +245,28 @@
             </Setter>
         </Style>
 
-        <Style x:Key="EquationHideButton" TargetType="ToggleButton">
+        <Style x:Key="EquationHideButtonStyle" TargetType="ToggleButton">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
                         <Grid x:Name="RootGrid"
-                              Background="Transparent"
-                              BorderBrush="Transparent">
+                              Background="{TemplateBinding Background}"
+                              BorderBrush="{TemplateBinding BorderBrush}">
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="{ThemeResource ButtonBackgroundBrush}"/>
-                                            <Setter Target="RootGrid.BorderBrush" Value="{ThemeResource ButtonBorderBrush}"/>
-                                            <Setter Target="Overlay.Opacity" Value="0.0"/>
-                                            <Setter Target="ContentPresenter.Visibility" Value="Visible"/>
-                                            <Setter Target="ShowHideIcon.Visibility" Value="Collapsed"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
+                                    <VisualState x:Name="Normal"/>
                                     <VisualState x:Name="PointerOver">
                                         <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="{ThemeResource ButtonBackgroundBrush}"/>
-                                            <Setter Target="RootGrid.BorderBrush" Value="{ThemeResource ButtonBorderBrush}"/>
                                             <Setter Target="Overlay.Opacity" Value="{StaticResource EquationButtonOverlayPointerOverOpacity}"/>
                                             <Setter Target="ContentPresenter.Visibility" Value="Collapsed"/>
                                             <Setter Target="ShowHideIcon.Visibility" Value="Visible"/>
-                                            <Setter Target="ShowHideIcon.Glyph" Value="&#xE890;"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="Pressed">
                                         <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="{ThemeResource ButtonBackgroundBrush}"/>
-                                            <Setter Target="RootGrid.BorderBrush" Value="{ThemeResource ButtonBorderBrush}"/>
                                             <Setter Target="Overlay.Opacity" Value="{StaticResource EquationButtonOverlayPressedOpacity}"/>
                                             <Setter Target="ContentPresenter.Visibility" Value="Collapsed"/>
                                             <Setter Target="ShowHideIcon.Visibility" Value="Visible"/>
-                                            <Setter Target="ShowHideIcon.Glyph" Value="&#xE890;"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="Checked">
@@ -323,6 +309,7 @@
                                               IsHitTestVisible="False"/>
                             <FontIcon x:Name="ShowHideIcon"
                                       FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                                      Glyph="&#xE890;"
                                       Visibility="Collapsed"/>
                         </Grid>
                     </ControlTemplate>
@@ -450,14 +437,10 @@
                                           MinWidth="44"
                                           MinHeight="44"
                                           VerticalAlignment="Stretch"
-                                          Style="{StaticResource EquationHideButton}"
+                                          Style="{StaticResource EquationHideButtonStyle}"
                                           Background="{TemplateBinding EquationColor}"
                                           Foreground="{StaticResource SystemChromeWhiteColor}"
                                           BorderBrush="{TemplateBinding EquationColor}">
-                                <ToggleButton.Resources>
-                                    <SolidColorBrush x:Name="ButtonBackgroundBrush" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                    <SolidColorBrush x:Name="ButtonBorderBrush" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                </ToggleButton.Resources>
                                 <StackPanel x:Name="FunctionNumberLabel"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
