@@ -30,8 +30,8 @@ DEPENDENCY_PROPERTY_INITIALIZATION(EquationTextBox, HasError);
 void EquationTextBox::OnApplyTemplate()
 {
     m_equationButton = dynamic_cast<ToggleButton ^>(GetTemplateChild("EquationButton"));
-    m_kgfEquationButton = dynamic_cast<Button ^>(GetTemplateChild("KGFEquationButton"));
-    m_richEditBox = dynamic_cast<MathRichEditBox ^>(GetTemplateChild("MathRichEditBox"));
+    m_kgfEquationButton = dynamic_cast<Button^>(GetTemplateChild("KGFEquationButton"));
+    m_richEditBox = dynamic_cast<MathRichEditBox ^>(GetTemplateChild("EquationTextBox"));
     m_deleteButton = dynamic_cast<Button ^>(GetTemplateChild("DeleteButton"));
     m_removeButton = dynamic_cast<Button ^>(GetTemplateChild("RemoveButton"));
     m_functionButton = dynamic_cast<Button ^>(GetTemplateChild("FunctionButton"));
@@ -60,6 +60,11 @@ void EquationTextBox::OnApplyTemplate()
          toolTip->Content = equationButtonMessage;
          ToolTipService::SetToolTip(m_equationButton, toolTip);
          AutomationProperties::SetName(m_equationButton, equationButtonMessage);
+    }
+
+    if (m_kgfEquationButton != nullptr)
+    {
+        m_kgfEquationButton->Click += ref new RoutedEventHandler(this, &EquationTextBox::OnKGFEquationButtonClicked);
     }
 
     if (m_richEditContextMenu != nullptr)
@@ -229,11 +234,6 @@ void EquationTextBox::OnEquationButtonClicked(Object ^ sender, RoutedEventArgs ^
     AutomationProperties::SetName(m_equationButton, equationButtonMessage);
 }
 
-void EquationTextBox::OnKGFEquationButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
-{
-    EquationButtonClicked(this, ref new RoutedEventArgs());
-}
-
 void EquationTextBox::OnRemoveButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
 {
     if (m_richEditBox != nullptr)
@@ -350,7 +350,7 @@ bool EquationTextBox::RichEditHasContent()
     {
         text = m_richEditBox->MathText;
     }
-    return (!text->IsEmpty() && m_HasFocus);
+    return !text->IsEmpty() && m_HasFocus;
 }
 
 void EquationTextBox::OnRichEditMenuOpening(Object ^ /*sender*/, Object ^ /*args*/)

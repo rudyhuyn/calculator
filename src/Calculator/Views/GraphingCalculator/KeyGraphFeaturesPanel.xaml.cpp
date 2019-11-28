@@ -16,35 +16,15 @@ using namespace Windows::UI::Xaml::Controls;
 KeyGraphFeaturesPanel::KeyGraphFeaturesPanel()
 {
     InitializeComponent();
+    this->Loaded += ref new RoutedEventHandler(this, &KeyGraphFeaturesPanel::KeyGraphFeaturesPanel_Loaded);
 }
 
-void KeyGraphFeaturesPanel::OnPropertyChanged(String ^ propertyName)
+void KeyGraphFeaturesPanel::KeyGraphFeaturesPanel_Loaded(_In_ Platform::Object ^ sender, _In_ Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
-    if (propertyName == L"ViewModel")
-    {
-        if (ViewModel == nullptr)
-        {
-            return;
-        }
-
-        SetEquationTextBoxProperties();
-    }
+    BackButton->Focus(::FocusState::Programmatic);
 }
 
-void KeyGraphFeaturesPanel::EquationButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
+void KeyGraphFeaturesPanel::BackButton_Click(Object ^ sender, RoutedEventArgs ^ e)
 {
     KeyGraphFeaturesClosed(this, ref new RoutedEventArgs());
-}
-
-void KeyGraphFeaturesPanel::EquationInputTextBox_Loaded(Object ^ sender, RoutedEventArgs ^ e)
-{
-    if (ViewModel != nullptr)
-    {
-        SetEquationTextBoxProperties();
-    }
-}
-
-void KeyGraphFeaturesPanel::SetEquationTextBoxProperties()
-{
-    EquationInputTextBox->SetEquationText(ViewModel->Expression);
 }

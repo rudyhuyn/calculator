@@ -101,7 +101,7 @@ void EquationInputArea::InputTextBox_Submitted(Object ^ sender, RoutedEventArgs 
     }
 }
 
-void EquationInputArea::EquationTextBox_RemoveButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
+void EquationInputArea::InputTextBox_RemoveButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
 {
     auto tb = static_cast<EquationTextBox ^>(sender);
     auto eq = static_cast<EquationViewModel ^>(tb->DataContext);
@@ -117,7 +117,7 @@ void EquationInputArea::EquationTextBox_RemoveButtonClicked(Object ^ sender, Rou
     }
 }
 
-void EquationInputArea::EquationTextBox_KeyGraphFeaturesButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
+void EquationInputArea::InputTextBox_KeyGraphFeaturesButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
 {
     auto tb = static_cast<EquationTextBox ^>(sender);
 
@@ -133,14 +133,14 @@ void EquationInputArea::EquationTextBox_KeyGraphFeaturesButtonClicked(Object ^ s
     KeyGraphFeaturesRequested(EquationVM, ref new RoutedEventArgs());
 }
 
-void EquationInputArea::EquationTextBox_EquationButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
+void EquationInputArea::InputTextBox_EquationButtonClicked(Object ^ sender, RoutedEventArgs ^ e)
 {
     auto tb = static_cast<EquationTextBox ^>(sender);
     auto eq = static_cast<EquationViewModel ^>(tb->DataContext);
     eq->IsLineEnabled = !eq->IsLineEnabled;
 }
 
-void EquationInputArea::EquationTextBoxLoaded(Object ^ sender, RoutedEventArgs ^ e)
+void EquationInputArea::InputTextBox_Loaded(Object ^ sender, RoutedEventArgs ^ e)
 {
     auto tb = static_cast<EquationTextBox ^>(sender);
     auto eq = static_cast<EquationViewModel ^>(tb->DataContext);

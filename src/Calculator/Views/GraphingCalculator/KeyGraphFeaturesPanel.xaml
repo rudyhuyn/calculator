@@ -12,97 +12,12 @@
              mc:Ignorable="d">
 
     <UserControl.Resources>
-        <Style x:Key="KGF_EquationTextBoxStyle" TargetType="controls:EquationTextBox">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}"/>
-            <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}"/>
-            <Setter Property="FontWeight" Value="Normal"/>
-            <Setter Property="Foreground" Value="{ThemeResource TextBoxForegroundThemeBrush}"/>
-            <Setter Property="Padding" Value="{ThemeResource TextControlThemePadding}"/>
-            <Setter Property="IsTabStop" Value="False"/>
-            <Setter Property="Typography.StylisticSet20" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="controls:EquationTextBox">
-                        <Grid>
-
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Grid.RowDefinitions>
-                                <RowDefinition MinHeight="44"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <Button x:Name="KGFEquationButton"
-                                    x:Uid="equationAnalysisBack"
-                                    MinWidth="44"
-                                    MinHeight="44"
-                                    VerticalAlignment="Stretch"
-                                    Background="{TemplateBinding EquationColor}"
-                                    Foreground="{StaticResource SystemChromeWhiteColor}"
-                                    BorderThickness="0">
-                                <Button.Content>
-                                    <StackPanel x:Name="FunctionNumberLabel"
-                                                Margin="5,0"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Center"
-                                                Background="Transparent"
-                                                Orientation="Horizontal">
-                                        <FontIcon Margin="0,0,6,0"
-                                                  VerticalAlignment="Center"
-                                                  FontFamily="{ThemeResource SymbolThemeFontFamily}"
-                                                  FontSize="16"
-                                                  Glyph="&#xE72B;"/>
-                                        <FontIcon FontFamily="{StaticResource CalculatorFontFamily}" Glyph="&#xF893;"/>
-                                        <TextBlock Margin="-5,19,0,0"
-                                                   FontSize="11"
-                                                   Text="{TemplateBinding EquationButtonContentIndex}"/>
-                                    </StackPanel>
-
-                                </Button.Content>
-                                <Button.Resources>
-                                    <SolidColorBrush x:Name="ButtonBackgroundPointerOver"
-                                                     Opacity="0.7"
-                                                     Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                    <SolidColorBrush x:Name="ButtonForegroundPointerOver" Color="{ThemeResource SystemChromeWhiteColor}"/>
-                                    <SolidColorBrush x:Name="ButtonBorderBrushPointerOver" Color="Transparent"/>
-                                </Button.Resources>
-                            </Button>
-
-                            <controls:MathRichEditBox x:Name="MathRichEditBox"
-                                                      Grid.Column="1"
-                                                      MinHeight="44"
-                                                      Padding="{TemplateBinding Padding}"
-                                                      VerticalAlignment="Stretch"
-                                                      Style="{StaticResource MathRichEditBoxStyle}"
-                                                      Background="Transparent"
-                                                      BorderThickness="0"
-                                                      FontFamily="{TemplateBinding FontFamily}"
-                                                      FontSize="{TemplateBinding FontSize}"
-                                                      FontWeight="{TemplateBinding FontWeight}"
-                                                      AcceptsReturn="false"
-                                                      InputScope="Text"
-                                                      IsReadOnly="True"
-                                                      MaxLength="2048"
-                                                      TextWrapping="NoWrap"
-                                                      UseSystemFocusVisuals="True"/>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
         <Style x:Key="KGF_RichEditBoxStyle" TargetType="controls:MathRichEditBox">
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="IsEnabled" Value="True"/>
-            <Setter Property="Margin" Value="-8,0,0,0"/>
             <Setter Property="UseSystemFocusVisuals" Value="True"/>
             <Setter Property="TextWrapping" Value="NoWrap"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
@@ -119,15 +34,13 @@
             <Setter Property="Typography.StylisticSet20" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <ControlTemplate TargetType="RichEditBox">
+                    <ControlTemplate TargetType="controls:MathRichEditBox">
                         <Grid>
-
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
-
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
                                     <VisualState x:Name="Disabled">
@@ -155,7 +68,6 @@
                                     <VisualState x:Name="Focused"/>
                                 </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
-
                             <ContentPresenter x:Name="HeaderContentPresenter"
                                               Grid.Row="0"
                                               Margin="{ThemeResource RichEditBoxTopHeaderMargin}"
@@ -207,22 +119,18 @@
                                               x:Load="False"/>
 
                         </Grid>
-
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
-
         <Style x:Name="KGF_TitleTextBlockStyle" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="Medium"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="TextWrapping" Value="WrapWholeWords"/>
-            <Setter Property="VerticalAlignment" Value="Bottom"/>
             <Setter Property="AutomationProperties.HeadingLevel" Value="Level2"/>
         </Style>
 
         <Style x:Name="KGF_TextBlockStyle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="Normal"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="TextWrapping" Value="WrapWholeWords"/>
         </Style>
@@ -230,11 +138,8 @@
         <Style x:Name="KGF_ListViewItemContainerStyle" TargetType="ListViewItem">
             <Setter Property="IsTabStop" Value="False"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-            <Setter Property="Width" Value="Auto"/>
             <Setter Property="AutomationProperties.AccessibilityView" Value="Raw"/>
-            <Setter Property="Margin" Value="0,10"/>
+            <Setter Property="Padding" Value="0,10"/>
         </Style>
 
         <DataTemplate x:Key="KGFRichEditDataTemplate" x:DataType="vm:KeyGraphFeaturesItem">
@@ -245,7 +150,8 @@
                 <ItemsControl ItemsSource="{x:Bind DisplayItems, Mode=OneWay}" UseSystemFocusVisuals="True">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="x:String">
-                            <controls:MathRichEditBox HorizontalAlignment="Left"
+                            <controls:MathRichEditBox Margin="-8,0,0,0"
+                                                      HorizontalAlignment="Left"
                                                       HorizontalContentAlignment="Left"
                                                       Style="{StaticResource KGF_RichEditBoxStyle}"
                                                       MathText="{x:Bind}"/>
@@ -270,12 +176,13 @@
                                 </Grid.ColumnDefinitions>
                                 <controls:MathRichEditBox Grid.Column="0"
                                                           MinWidth="25"
+                                                          Margin="-8,2,0,0"
                                                           VerticalAlignment="Center"
                                                           Style="{StaticResource KGF_RichEditBoxStyle}"
                                                           MathText="{x:Bind Expression}"/>
                                 <TextBlock Grid.Column="1"
                                            HorizontalAlignment="Left"
-                                           VerticalAlignment="Center"
+                                           VerticalAlignment="Center" Margin="0,-1,0,0"
                                            Style="{StaticResource KGF_TextBlockStyle}"
                                            Text="{x:Bind Direction}"/>
                             </Grid>
@@ -307,28 +214,51 @@
 
         <converters:BooleanToVisibilityNegationConverter x:Name="BooleanToVisibilityNegationConverter"/>
     </UserControl.Resources>
-
-    <Grid Margin="0,7,0,0" Background="Transparent">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <controls:EquationTextBox x:Name="EquationInputTextBox"
-                                  x:Uid="EquationInputButton"
-                                  Grid.Row="0"
-                                  Margin="0,0,3,0"
-                                  Style="{StaticResource KGF_EquationTextBoxStyle}"
-                                  Background="Transparent"
-                                  BorderThickness="0"
-                                  DataContext="{x:Bind ViewModel, Mode=OneWay}"
-                                  EquationButtonClicked="EquationButtonClicked"
-                                  EquationButtonContentIndex="{x:Bind ViewModel.FunctionLabelIndex, Mode=OneWay}"
-                                  EquationColor="{x:Bind ViewModel.LineColor, Mode=OneWay}"
-                                  Loaded="EquationInputTextBox_Loaded"/>
+        <Grid Padding="0,4,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button x:Name="BackButton"
+                    x:Uid="equationAnalysisBack"
+                    MinWidth="44"
+                    MinHeight="44"
+                    VerticalAlignment="Stretch"
+                    Style="{StaticResource ButtonRevealStyle}"
+                    Background="{x:Bind ViewModel.LineColor}"
+                    Foreground="{ThemeResource SystemChromeWhiteColor}"
+                    BorderThickness="0"
+                    Click="BackButton_Click">
+                <StackPanel Margin="5,0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                    <FontIcon VerticalAlignment="Center"
+                              FontFamily="{ThemeResource SymbolThemeFontFamily}"
+                              FontSize="16"
+                              Glyph="&#xE72B;"/>
+                    <TextBlock Margin="12,0,0,0" Text="ƒ"/>
+                    <TextBlock Margin="0,10,0,0"
+                               FontSize="9"
+                               Text="{x:Bind ViewModel.FunctionLabelIndex}"/>
+                </StackPanel>
+            </Button>
+            <controls:MathRichEditBox x:Name="EquationTextBox"
+                                      Grid.Column="1"
+                                      Margin="0,0,6,0"
+                                      VerticalAlignment="Center"
+                                      Style="{StaticResource KGF_RichEditBoxStyle}"
+                                      MathText="{x:Bind ViewModel.Expression, Mode=OneWay}"/>
+        </Grid>
         <TextBlock x:Uid="KeyGraphFeaturesLabel"
                    Grid.Row="1"
-                   Margin="12,20,10,0"
+                   Margin="12,12,10,0"
                    Style="{StaticResource KGF_TitleTextBlockStyle}"
                    FontSize="18"
                    AutomationProperties.HeadingLevel="Level1"/>
@@ -337,20 +267,17 @@
                   Grid.Row="2"
                   Margin="12,10,10,0"
                   Padding="0,0,0,12"
-                  IsItemClickEnabled="False"
                   ItemContainerStyle="{StaticResource KGF_ListViewItemContainerStyle}"
                   ItemTemplateSelector="{StaticResource KGFTemplateSelector}"
                   ItemsSource="{x:Bind ViewModel.KeyGraphFeaturesItems}"
-                  ScrollViewer.VerticalScrollBarVisibility="Auto"
-                  ScrollViewer.VerticalScrollMode="Auto"
                   SelectionMode="None"
                   Visibility="{x:Bind ViewModel.AnalysisErrorVisible, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"/>
         <TextBlock x:Name="AnalysisErrorTextBlock"
                    Grid.Row="2"
                    Margin="12,10,10,0"
                    Style="{StaticResource KGF_TextBlockStyle}"
-                   FontWeight="Normal"
                    Text="{x:Bind ViewModel.AnalysisErrorString, Mode=OneWay}"
+                   TextWrapping="Wrap"
                    Visibility="{x:Bind ViewModel.AnalysisErrorVisible, Mode=OneWay}"/>
     </Grid>
 </UserControl>
