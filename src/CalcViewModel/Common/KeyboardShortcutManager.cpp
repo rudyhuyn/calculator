@@ -431,9 +431,9 @@ void KeyboardShortcutManager::OnCharacterReceivedHandler(CoreWindow ^ sender, Ch
         {
             wchar_t character = static_cast<wchar_t>(args->KeyCode);
             auto buttons = s_CharacterForButtons.find(viewId)->second.equal_range(character);
+            RunFirstEnabledButtonCommand(buttons);
 
             LightUpButtons(buttons);
-            RunFirstEnabledButtonCommand(buttons);
         }
     }
 }
