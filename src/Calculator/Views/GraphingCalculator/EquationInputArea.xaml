@@ -665,6 +665,7 @@
                                               EquationSubmitted="InputTextBox_Submitted"
                                               GotFocus="InputTextBox_GotFocus"
                                               HasError="{x:Bind GraphEquation.HasGraphError, Mode=OneWay}"
+                                              Loaded="InputTextBox_Loaded"
                                               LostFocus="InputTextBox_LostFocus"
                                               RemoveButtonClicked="InputTextBox_RemoveButtonClicked">
                         <controls:EquationTextBox.ColorChooserFlyout>
