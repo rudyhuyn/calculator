@@ -23,15 +23,9 @@
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
             <Setter Property="Typography.StylisticSet20" Value="True"/>
-            <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled"/>
-            <Setter Property="ScrollViewer.VerticalScrollMode" Value="Disabled"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
-            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False"/>
             <Setter Property="TextWrapping" Value="NoWrap"/>
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="VerticalAlignment" Value="Stretch"/>
-            <Setter Property="Typography.StylisticSet20" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="controls:MathRichEditBox">
@@ -117,7 +111,6 @@
                                               AutomationProperties.AccessibilityView="Raw"
                                               Content="{TemplateBinding Description}"
                                               x:Load="False"/>
-
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -181,8 +174,9 @@
                                                           Style="{StaticResource KGF_RichEditBoxStyle}"
                                                           MathText="{x:Bind Expression}"/>
                                 <TextBlock Grid.Column="1"
+                                           Margin="0,-1,0,0"
                                            HorizontalAlignment="Left"
-                                           VerticalAlignment="Center" Margin="0,-1,0,0"
+                                           VerticalAlignment="Center"
                                            Style="{StaticResource KGF_TextBlockStyle}"
                                            Text="{x:Bind Direction}"/>
                             </Grid>
@@ -243,7 +237,7 @@
                               FontFamily="{ThemeResource SymbolThemeFontFamily}"
                               FontSize="16"
                               Glyph="&#xE72B;"/>
-                    <TextBlock Margin="12,0,0,0" Text="ƒ"/>
+                    <TextBlock Margin="12,0,0,0" Text="&#x192;"/>
                     <TextBlock Margin="0,10,0,0"
                                FontSize="9"
                                Text="{x:Bind ViewModel.FunctionLabelIndex}"/>
