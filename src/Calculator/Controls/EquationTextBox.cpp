@@ -30,7 +30,6 @@ DEPENDENCY_PROPERTY_INITIALIZATION(EquationTextBox, HasError);
 void EquationTextBox::OnApplyTemplate()
 {
     m_equationButton = dynamic_cast<ToggleButton ^>(GetTemplateChild("EquationButton"));
-    m_kgfEquationButton = dynamic_cast<Button^>(GetTemplateChild("KGFEquationButton"));
     m_richEditBox = dynamic_cast<MathRichEditBox ^>(GetTemplateChild("EquationTextBox"));
     m_deleteButton = dynamic_cast<Button ^>(GetTemplateChild("DeleteButton"));
     m_removeButton = dynamic_cast<Button ^>(GetTemplateChild("RemoveButton"));
@@ -62,20 +61,10 @@ void EquationTextBox::OnApplyTemplate()
          AutomationProperties::SetName(m_equationButton, equationButtonMessage);
     }
 
-    if (m_kgfEquationButton != nullptr)
-    {
-        m_kgfEquationButton->Click += ref new RoutedEventHandler(this, &EquationTextBox::OnKGFEquationButtonClicked);
-    }
-
     if (m_richEditContextMenu != nullptr)
     {
         m_richEditContextMenu->Opening +=
             ref new Windows::Foundation::EventHandler<Platform::Object ^>(this, &EquationTextBox::OnRichEditMenuOpening);
-    }
-
-    if (m_kgfEquationButton != nullptr)
-    {
-        m_kgfEquationButton->Click += ref new RoutedEventHandler(this, &EquationTextBox::OnKGFEquationButtonClicked);
     }
 
     if (m_deleteButton != nullptr)
