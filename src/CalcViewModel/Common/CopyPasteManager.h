@@ -5,8 +5,8 @@
 
 #include "AppResourceProvider.h"
 #include "NavCategory.h"
-#include "BitLength.h"
 #include "NumberBase.h"
+#include "BitLength.h"
 
 namespace CalculatorUnitTests
 {
@@ -15,78 +15,33 @@ namespace CalculatorUnitTests
 
 namespace CalculatorApp
 {
-public
-    value struct CopyPasteMaxOperandLengthAndValue
-    {
-        unsigned int maxLength;
-        unsigned long long maxValue;
-    };
-
-    public ref class CopyPasteManager sealed
+    class CopyPasteManager
     {
     public:
-        static void CopyToClipboard(Platform::String^ stringToCopy);
-        static concurrency::task<Platform::String^> GetStringToPaste();
+        static void CopyToClipboard(Platform::String ^ stringToCopy);
+        static concurrency::task<Platform::String ^> GetStringToPaste();
         static bool HasStringToPaste()
         {
-            unsigned int get()
-            {
-                return MaxPasteableLengthValue;
-            }
-        }
-        static property unsigned int MaxOperandCount
-        {
-            unsigned int get()
-            {
-                return MaxOperandCountValue;
-            }
-        }
-        static property unsigned int MaxStandardOperandLength
-        {
-            unsigned int get()
-            {
-                return MaxStandardOperandLengthValue;
-            }
-        }
-        static property unsigned int MaxScientificOperandLength
-        {
-            unsigned int get()
-            {
-                return MaxScientificOperandLengthValue;
-            }
+            return ClipboardTextFormat() >= 0;
         }
 
-        static property unsigned int MaxConverterInputLength
-        {
-            unsigned int get()
-            {
-                return MaxConverterInputLengthValue;
-            }
-        }
-
-        static property unsigned int MaxExponentLength
-        {
-            unsigned int get()
-            {
-                return MaxExponentLengthValue;
-            }
-        }
-
-        static property unsigned int MaxProgrammerBitLength
-        {
-            unsigned int get()
-            {
-                return MaxProgrammerBitLengthValue;
-            }
-        }
+        static constexpr auto PasteErrorString = L"NoOp";
 
     private:
         static int ClipboardTextFormat();
 
-        static std::pair<size_t, uint64_t> GetMaxOperandLengthAndValue(CalculatorApp::Common::ViewMode mode, CalculatorApp::Common::CategoryGroupType modeType, int programmerNumberBase = -1, int bitLengthType = -1);
-        static size_t OperandLength(std::wstring operand, CalculatorApp::Common::ViewMode mode, CalculatorApp::Common::CategoryGroupType modeType, int programmerNumberBase = -1);
+        static std::pair<size_t, uint64_t> GetMaxOperandLengthAndValue(
+            CalculatorApp::Common::ViewMode mode,
+            CalculatorApp::Common::CategoryGroupType modeType,
+            CalculatorApp::Common::NumberBase programmerNumberBase = CalculatorApp::Common::NumberBase::Unknown,
+            CalculatorApp::Common::BitLength bitLengthType = CalculatorApp::Common::BitLength::BitLengthUnknown);
+        static size_t OperandLength(
+            std::wstring operand,
+            CalculatorApp::Common::ViewMode mode,
+            CalculatorApp::Common::CategoryGroupType modeType,
+            CalculatorApp::Common::NumberBase programmerNumberBase = CalculatorApp::Common::NumberBase::Unknown);
         static size_t StandardScientificOperandLength(std::wstring operand);
-        static size_t ProgrammerOperandLength(const std::wstring& operand, int numberBase);
+        static size_t ProgrammerOperandLength(const std::wstring& operand, CalculatorApp::Common::NumberBase numberBase);
 
         static constexpr size_t MaxStandardOperandLength = 16;
         static constexpr size_t MaxScientificOperandLength = 32;
@@ -96,15 +51,8 @@ public
         static constexpr size_t MaxExponentLength = 4;
         static constexpr size_t MaxProgrammerBitLength = 64;
 
-        static Platform::String^ supportedFormats[];
+        static Platform::String ^ supportedFormats[];
 
-    private:
-        static constexpr size_t MaxStandardOperandLengthValue = 16;
-        static constexpr size_t MaxScientificOperandLengthValue = 32;
-        static constexpr size_t MaxConverterInputLengthValue = 16;
-        static constexpr size_t MaxOperandCountValue = 100;
-        static constexpr size_t MaxExponentLengthValue = 4;
-        static constexpr size_t MaxProgrammerBitLengthValue = 64;
-        static constexpr size_t MaxPasteableLengthValue = 512;
+        friend class CalculatorUnitTests::CopyPasteManagerTest;
     };
 }

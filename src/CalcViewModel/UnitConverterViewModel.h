@@ -9,7 +9,6 @@
 #include "Common/Automation/NarratorAnnouncement.h"
 #include "Common/CalculatorButtonUser.h"
 #include "Common/NavCategory.h"
-#include "ExpressionParser/Parser.h"
 
 namespace CalculatorApp
 {
@@ -220,7 +219,7 @@ namespace CalculatorApp
 
             internal : void ResetView();
             void PopulateData();
-            NumbersAndOperatorsEnum MapCharacterToButtonId(const wchar_t ch, bool& canSendNegate);
+            UnitConversionManager::Command MapCalculatorCommandToButtonId(CalculationManager::Command command);
             void DisplayPasteError();
             void OnValueActivated(IActivatable ^ control);
             void OnPaste(Platform::String ^ stringToPaste);
@@ -343,8 +342,7 @@ namespace CalculatorApp
             Platform::String ^ m_lastAnnouncedConversionResult;
             Category ^ m_CurrentCategory;
             bool m_isCurrencyDataLoaded;
-            CalcExpressionParser m_parser;
-            std::unique_ptr<CalculatorApp::Common::ConversionResultTaskHelper> m_conversionResultTaskHelper;
+            ExpressionParser::CalcExpressionParser ^ m_parser;
         };
 
         class UnitConverterVMCallback : public UnitConversionManager::IUnitConverterVMCallback

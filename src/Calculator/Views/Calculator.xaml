@@ -1274,5 +1274,11 @@
                 </PivotItem>
             </Pivot>
         </Border>
+        <Grid Background="#f0f0f0" Visibility="Collapsed">
+            <StackPanel Margin="24" VerticalAlignment="Center">
+                <TextBox x:Name="InstaFormula"/>
+                <TextBlock x:Name="InstaResult"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

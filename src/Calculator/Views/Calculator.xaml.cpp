@@ -50,7 +50,8 @@ Calculator::Calculator()
     SetFontSizeResources();
     InitializeComponent();
     LoadResourceStrings();
-
+    KeyboardShortcutManager::DisableShortcuts(true);
+    InstaFormula->KeyUp += ref new Windows::UI::Xaml::Input::KeyEventHandler(this, &CalculatorApp::Calculator::OnKeyDown);
     if (LocalizationService::GetInstance()->IsRtlLayout())
     {
         HistoryButton->HorizontalAlignment = ::HorizontalAlignment::Left;
@@ -62,6 +63,24 @@ Calculator::Calculator()
     PasteMenuItem->Text = resLoader->GetResourceString(L"pasteMenuItem");
 
     this->SizeChanged += ref new SizeChangedEventHandler(this, &Calculator::Calculator_SizeChanged);
+}
+
+void CalculatorApp::Calculator::OnKeyDown(Platform::Object ^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^ e)
+{
+    Model->SendCommandToCalcManager(81);
+    auto text = InstaFormula->Text;
+    auto textData = std::wstring(text->Data());
+    auto countOpen = std::count(textData.begin(), textData.end(), '(');
+    auto countClose = std::count(textData.begin(), textData.end(), ')');
+
+    for (auto i = countClose; i < countOpen; ++i)
+    {
+        textData += L")";
+    }
+    Model->OnPaste(ref new Platform::String(textData.data()), ViewMode::Scientific);
+    Model->SendCommandToCalcManager(121);
+    if (Model->DisplayValue != "0")
+        InstaResult->Text = Model->DisplayValue;
 }
 
 void Calculator::LoadResourceStrings()

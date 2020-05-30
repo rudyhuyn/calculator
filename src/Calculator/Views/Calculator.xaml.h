@@ -133,6 +133,7 @@ public
         CalculatorApp::HistoryList ^ m_historyList;
         bool m_fIsHistoryFlyoutOpen;
         bool m_fIsMemoryFlyoutOpen;
+        void OnInstaKeyDownHandler(Platform::Object ^ sender, Windows::UI::Core::KeyEventArgs ^ e);
         void OnMemoryFlyoutOpened(_In_ Platform::Object ^ sender, _In_ Platform::Object ^ args);
         void OnMemoryFlyoutClosing(
             _In_ Windows::UI::Xaml::Controls::Primitives::FlyoutBase ^ sender,
@@ -150,5 +151,6 @@ public
         void OnMemoryAccessKeyInvoked(_In_ Windows::UI::Xaml::UIElement ^ sender, _In_ Windows::UI::Xaml::Input::AccessKeyInvokedEventArgs ^ args);
         void OnVisualStateChanged(Platform::Object ^ sender, Windows::UI::Xaml::VisualStateChangedEventArgs ^ e);
 
-   };
+   void OnKeyDown(Platform::Object ^ sender, Windows::UI::Xaml::Input::KeyRoutedEventArgs ^ e);
+    };
 }

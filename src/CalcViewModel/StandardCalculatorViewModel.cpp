@@ -14,6 +14,7 @@ using namespace CalculatorApp::Common;
 using namespace CalculatorApp::Common::Automation;
 using namespace CalculatorApp::ViewModel;
 using namespace CalculationManager;
+using namespace ExpressionParser;
 using namespace concurrency;
 using namespace Platform;
 using namespace Platform::Collections;
@@ -95,6 +96,7 @@ StandardCalculatorViewModel::StandardCalculatorViewModel()
     , m_localizedNoRightParenthesisAddedFormat(nullptr)
     , m_TokenPosition(-1)
     , m_isLastOperationHistoryLoad(false)
+    , m_parser(ref new CalcExpressionParser())
 {
     WeakReference calculatorViewModel(this);
     auto appResourceProvider = AppResourceProvider::GetInstance();
@@ -251,8 +253,7 @@ void StandardCalculatorViewModel::SetNoParenAddedNarratorAnnouncement()
 {
     if (m_localizedNoRightParenthesisAddedFormat == nullptr)
     {
-        m_localizedNoRightParenthesisAddedFormat =
-            AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::NoParenthesisAdded);
+        m_localizedNoRightParenthesisAddedFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::NoParenthesisAdded);
     }
 
     Announcement = CalculatorAnnouncement::GetNoRightParenthesisAddedAnnouncement(m_localizedNoRightParenthesisAddedFormat);
@@ -721,10 +722,7 @@ void StandardCalculatorViewModel::OnPasteCommand(Object ^ parameter)
 
     // Ensure that the paste happens on the UI thread
     CopyPasteManager::GetStringToPaste().then(
-        [this, mode](String^ pastedString)
-    {
-        OnPaste(pastedString, mode);
-    }, concurrency::task_continuation_context::use_current());
+        [this, mode](String ^ pastedString) { OnPaste(pastedString, mode); }, concurrency::task_continuation_context::use_current());
 }
 
 CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(NumbersAndOperatorsEnum operation)
@@ -732,46 +730,61 @@ CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(
     return safe_cast<Command>(operation);
 }
 
-void StandardCalculatorViewModel::OnPaste(String ^ pastedString)
+void StandardCalculatorViewModel::OnPaste(String ^ pastedString, ViewMode mode)
 {
-
     unsigned int base = 0;
-    switch (GetNumberBase())
+    switch (m_CurrentRadixType)
     {
-    case DecBase:
+    case NumberBase::DecBase:
         base = 10;
         break;
-    case OctBase:
+    case NumberBase::OctBase:
         base = 8;
         break;
-    case HexBase:
+    case NumberBase::HexBase:
         base = 16;
         break;
-    case BinBase:
+    case NumberBase::BinBase:
         base = 2;
         break;
     }
+
     const auto& localizationSettings = LocalizationSettings::GetInstance();
 
-    auto keys = m_parser.Parse(pastedString->Data(), mode, base, localizationSettings.GetDecimalSeparatorStr(), localizationSettings.GetNumberGroupingSeparatorStr());
+    ExpressionParser::ParserMode expressionParserMode;
+    switch (mode)
+    {
+    case ViewMode::Programmer:
+        expressionParserMode = ExpressionParser::ParserMode::Programmer;
+        break;
+    case ViewMode::Scientific:
+        expressionParserMode = ExpressionParser::ParserMode::Scientific;
+        break;
+    default:
+        expressionParserMode = ExpressionParser::ParserMode::Standard;
+        break;
+    }
 
+    auto commands = m_parser->Parse(
+        ref new String(pastedString->Data()),
+        expressionParserMode,
+        base,
+        ref new String(localizationSettings.GetDecimalSeparatorStr().c_str()),
+        ref new String(localizationSettings.GetNumberGroupingSeparatorStr().c_str()));
 
     // If pastedString is invalid then display pasteError else process the string
-    if (keys == nullptr)
+    if (commands == nullptr)
     {
         this->DisplayPasteError();
         return;
     }
 
-    TraceLogger::GetInstance().LogValidInputPasted(mode);
+    TraceLogger::GetInstance()->LogInputPasted(mode);
     m_standardCalculatorManager.SendCommand(Command::CommandCENTR);
-
-    for (auto&key : *keys)
+    for (int command : commands)
     {
-        auto command = ConvertToOperatorsEnum(key);
-        m_standardCalculatorManager.SendCommand(command);
+        m_standardCalculatorManager.SendCommand(static_cast<Command>(command));
     }
-    delete keys;
 }
 
 void StandardCalculatorViewModel::OnClearMemoryCommand(Object ^ parameter)
@@ -896,8 +909,8 @@ ButtonInfo StandardCalculatorViewModel::MapCharacterToButtonId(char16 ch)
     {
         if (LocalizationSettings::GetInstance().IsLocalizedDigit(ch))
         {
-            result.buttonId = NumbersAndOperatorsEnum::Zero
-                              + static_cast<NumbersAndOperatorsEnum>(ch - LocalizationSettings::GetInstance().GetDigitSymbolFromEnUsDigit('0'));
+            result.buttonId =
+                NumbersAndOperatorsEnum::Zero + static_cast<NumbersAndOperatorsEnum>(ch - LocalizationSettings::GetInstance().GetDigitSymbolFromEnUsDigit('0'));
             result.canSendNegate = true;
         }
     }
@@ -1178,29 +1191,29 @@ void StandardCalculatorViewModel::SaveEditedCommand(_In_ unsigned int tokenPosit
 
         switch (command)
         {
-            case static_cast<int>(Command::CommandASIN) :
-                updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSIN), true, angleType);
-                break;
-                case static_cast<int>(Command::CommandACOS) :
-                    updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOS), true, angleType);
-                    break;
-                    case static_cast<int>(Command::CommandATAN) :
-                        updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTAN), true, angleType);
-                        break;
-                        case static_cast<int>(Command::CommandASINH) :
-                            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSINH), true, angleType);
-                            break;
-                            case static_cast<int>(Command::CommandACOSH) :
-                                updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOSH), true, angleType);
-                                break;
-                                case static_cast<int>(Command::CommandATANH) :
-                                    updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTANH), true, angleType);
-                                    break;
-                                    case static_cast<int>(Command::CommandPOWE) :
-                                        updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandLN), true, angleType);
-                                        break;
-                                    default:
-                                        updatedToken = CCalcEngine::OpCodeToUnaryString(nOpCode, false, angleType);
+        case Command::CommandASIN:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSIN), true, angleType);
+            break;
+        case Command::CommandACOS:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOS), true, angleType);
+            break;
+        case Command::CommandATAN:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTAN), true, angleType);
+            break;
+        case Command::CommandASINH:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandSINH), true, angleType);
+            break;
+        case Command::CommandACOSH:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandCOSH), true, angleType);
+            break;
+        case Command::CommandATANH:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandTANH), true, angleType);
+            break;
+        case Command::CommandPOWE:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(Command::CommandLN), true, angleType);
+            break;
+        default:
+            updatedToken = CCalcEngine::OpCodeToUnaryString(static_cast<int>(command), false, angleType);
         }
         if ((token.first.length() > 0) && (token.first[token.first.length() - 1] == L'('))
         {
@@ -1348,7 +1361,7 @@ void StandardCalculatorViewModel::Recalculate(bool fromHistory)
 bool StandardCalculatorViewModel::IsOpnd(Command command)
 {
     static constexpr Command opnd[] = { Command::Command0, Command::Command1, Command::Command2, Command::Command3, Command::Command4,  Command::Command5,
-                              Command::Command6, Command::Command7, Command::Command8, Command::Command9, Command::CommandPNT };
+                                        Command::Command6, Command::Command7, Command::Command8, Command::Command9, Command::CommandPNT };
 
     return find(begin(opnd), end(opnd), command) != end(opnd);
 }
@@ -1356,9 +1369,9 @@ bool StandardCalculatorViewModel::IsOpnd(Command command)
 bool StandardCalculatorViewModel::IsUnaryOp(Command command)
 {
     static constexpr Command unaryOp[] = { Command::CommandSQRT,  Command::CommandFAC,  Command::CommandSQR,   Command::CommandLOG,
-                                 Command::CommandPOW10, Command::CommandPOWE, Command::CommandLN,    Command::CommandREC,
-                                 Command::CommandSIGN,  Command::CommandSINH, Command::CommandASINH, Command::CommandCOSH,
-                                 Command::CommandACOSH, Command::CommandTANH, Command::CommandATANH, Command::CommandCUB };
+                                           Command::CommandPOW10, Command::CommandPOWE, Command::CommandLN,    Command::CommandREC,
+                                           Command::CommandSIGN,  Command::CommandSINH, Command::CommandASINH, Command::CommandCOSH,
+                                           Command::CommandACOSH, Command::CommandTANH, Command::CommandATANH, Command::CommandCUB };
 
     if (find(begin(unaryOp), end(unaryOp), command) != end(unaryOp))
     {
@@ -1375,9 +1388,8 @@ bool StandardCalculatorViewModel::IsUnaryOp(Command command)
 
 bool StandardCalculatorViewModel::IsTrigOp(Command command)
 {
-    static constexpr Command trigOp[] = {
-        Command::CommandSIN, Command::CommandCOS, Command::CommandTAN, Command::CommandASIN, Command::CommandACOS, Command::CommandATAN
-    };
+    static constexpr Command trigOp[] = { Command::CommandSIN,  Command::CommandCOS,  Command::CommandTAN,
+                                          Command::CommandASIN, Command::CommandACOS, Command::CommandATAN };
 
     return find(begin(trigOp), end(trigOp), command) != end(trigOp);
 }
@@ -1385,7 +1397,7 @@ bool StandardCalculatorViewModel::IsTrigOp(Command command)
 bool StandardCalculatorViewModel::IsBinOp(Command command)
 {
     static constexpr Command binOp[] = { Command::CommandADD, Command::CommandSUB,  Command::CommandMUL, Command::CommandDIV,
-                               Command::CommandEXP, Command::CommandROOT, Command::CommandMOD, Command::CommandPWR };
+                                         Command::CommandEXP, Command::CommandROOT, Command::CommandMOD, Command::CommandPWR };
 
     return find(begin(binOp), end(binOp), command) != end(binOp);
 }
@@ -1634,12 +1646,11 @@ NarratorAnnouncement ^ StandardCalculatorViewModel::GetDisplayUpdatedNarratorAnn
     {
         if (m_localizedButtonPressFeedbackAutomationFormat == nullptr)
         {
-            m_localizedButtonPressFeedbackAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::ButtonPressFeedbackFormat);
+            m_localizedButtonPressFeedbackAutomationFormat =
+                AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::ButtonPressFeedbackFormat);
         }
         announcement = LocalizationStringUtil::GetLocalizedString(
-            m_localizedButtonPressFeedbackAutomationFormat,
-            m_CalculationResultAutomationName,
-            m_feedbackForButtonPress);
+            m_localizedButtonPressFeedbackAutomationFormat, m_CalculationResultAutomationName, m_feedbackForButtonPress);
     }
 
     // Make sure we don't accidentally repeat an announcement.

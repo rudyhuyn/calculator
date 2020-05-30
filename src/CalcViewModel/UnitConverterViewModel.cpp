@@ -18,6 +18,7 @@ using namespace CalculatorApp;
 using namespace CalculatorApp::Common;
 using namespace CalculatorApp::Common::Automation;
 using namespace CalculatorApp::ViewModel;
+using namespace ExpressionParser;
 using namespace concurrency;
 using namespace Platform;
 using namespace Platform::Collections;
@@ -121,6 +122,7 @@ UnitConverterViewModel::UnitConverterViewModel(const shared_ptr<UCM::IUnitConver
     , m_CurrencyRatioEqualityAutomationName(L"")
     , m_isInputBlocked(false)
     , m_CurrencyDataLoadFailed(false)
+    , m_parser(ref new CalcExpressionParser())
 {
     auto localizationService = LocalizationService::GetInstance();
     m_model->SetViewModelCallback(make_shared<UnitConverterVMCallback>(this));
@@ -472,13 +474,11 @@ void UnitConverterViewModel::OnButtonPressed(Platform::Object ^ parameter)
         return;
     }
 
-    static constexpr UCM::Command OPERANDS[] = { UCM::Command::Zero, UCM::Command::One, UCM::Command::Two,   UCM::Command::Three, UCM::Command::Four,
-                                                   UCM::Command::Five, UCM::Command::Six, UCM::Command::Seven, UCM::Command::Eight, UCM::Command::Nine };
-	if (m_isInputBlocked)
-	{
-		return;
-	}
-	m_model->SendCommand(command);
+    if (m_isInputBlocked)
+    {
+        return;
+    }
+    m_model->SendCommand(command);
 
     TraceLogger::GetInstance()->LogConverterInputReceived(Mode);
 }
@@ -501,11 +501,7 @@ void UnitConverterViewModel::OnPasteCommand(Platform::Object ^ parameter)
     // Ensure that the paste happens on the UI thread
     // EventWriteClipboardPaste_Start();
     // Any converter ViewMode is fine here.
-    CopyPasteManager::GetStringToPaste().then(
-        [this](String^ pastedString)
-    {
-        OnPaste(pastedString, m_Mode);
-    }, concurrency::task_continuation_context::use_current());
+    CopyPasteManager::GetStringToPaste().then([this](String ^ pastedString) { OnPaste(pastedString); }, concurrency::task_continuation_context::use_current());
 }
 
 void UnitConverterViewModel::InitializeView()
@@ -806,88 +802,65 @@ void UnitConverterViewModel::UpdateInputBlocked(_In_ const wstring& currencyInpu
     }
 }
 
-NumbersAndOperatorsEnum UnitConverterViewModel::MapCharacterToButtonId(const wchar_t ch, bool& canSendNegate)
+UCM::Command UnitConverterViewModel::MapCalculatorCommandToButtonId(CalculationManager::Command command)
 {
-    static_assert(NumbersAndOperatorsEnum::Zero < NumbersAndOperatorsEnum::One, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::One < NumbersAndOperatorsEnum::Two, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Two < NumbersAndOperatorsEnum::Three, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Three < NumbersAndOperatorsEnum::Four, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Four < NumbersAndOperatorsEnum::Five, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Five < NumbersAndOperatorsEnum::Six, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Six < NumbersAndOperatorsEnum::Seven, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Seven < NumbersAndOperatorsEnum::Eight, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Eight < NumbersAndOperatorsEnum::Nine, "NumbersAndOperatorsEnum order is invalid");
-    static_assert(NumbersAndOperatorsEnum::Zero < NumbersAndOperatorsEnum::Nine, "NumbersAndOperatorsEnum order is invalid");
-
-    NumbersAndOperatorsEnum mappedValue = NumbersAndOperatorsEnum::None;
-    canSendNegate = false;
-
-    switch (ch)
+    switch (command)
     {
-    case '0':
-    case '1':
-    case '2':
-    case '3':
-    case '4':
-    case '5':
-    case '6':
-    case '7':
-    case '8':
-    case '9':
-        mappedValue = NumbersAndOperatorsEnum::Zero + static_cast<NumbersAndOperatorsEnum>(ch - L'0');
-        canSendNegate = true;
-        break;
-
-    case '-':
-        mappedValue = NumbersAndOperatorsEnum::Negate;
-        break;
-
+    case CalculationManager::Command::Command0:
+        return UCM::Command::Zero;
+    case CalculationManager::Command::Command1:
+        return UCM::Command::One;
+    case CalculationManager::Command::Command2:
+        return UCM::Command::Two;
+    case CalculationManager::Command::Command3:
+        return UCM::Command::Three;
+    case CalculationManager::Command::Command4:
+        return UCM::Command::Four;
+    case CalculationManager::Command::Command5:
+        return UCM::Command::Five;
+    case CalculationManager::Command::Command6:
+        return UCM::Command::Six;
+    case CalculationManager::Command::Command7:
+        return UCM::Command::Seven;
+    case CalculationManager::Command::Command8:
+        return UCM::Command::Eight;
+    case CalculationManager::Command::Command9:
+        return UCM::Command::Nine;
+    case CalculationManager::Command::CommandSIGN:
+        return UCM::Command::Negate;
+    case CalculationManager::Command::CommandDec:
+        return UCM::Command::Decimal;
     default:
-        // Respect the user setting for decimal separator
-        if (ch == m_decimalSeparator)
-        {
-            mappedValue = NumbersAndOperatorsEnum::Decimal;
-            canSendNegate = true;
-            break;
-        }
+        return UCM::Command::None;
     }
-
-    if (mappedValue == NumbersAndOperatorsEnum::None)
-    {
-        if (LocalizationSettings::GetInstance().IsLocalizedDigit(ch))
-        {
-            mappedValue = NumbersAndOperatorsEnum::Zero
-                          + static_cast<NumbersAndOperatorsEnum>(ch - LocalizationSettings::GetInstance().GetDigitSymbolFromEnUsDigit(L'0'));
-            canSendNegate = true;
-        }
-    }
-
-    return mappedValue;
 }
 
 void UnitConverterViewModel::OnPaste(String ^ stringToPaste)
 {
     const auto& localizationSettings = LocalizationSettings::GetInstance();
 
-    auto keys = m_parser.Parse(stringToPaste->Data(), mode, 10, localizationSettings.GetDecimalSeparatorStr(), localizationSettings.GetNumberGroupingSeparatorStr());
-
+    auto cmds = m_parser->Parse(
+        ref new String(stringToPaste->Data()),
+        ParserMode::Numbers,
+        10,
+        ref new String(localizationSettings.GetDecimalSeparatorStr().c_str()),
+        ref new String(localizationSettings.GetNumberGroupingSeparatorStr().c_str()));
 
     // If pastedString is invalid then display pasteError else process the string
-    if (keys == nullptr)
+    if (cmds == nullptr)
     {
         this->DisplayPasteError();
         return;
     }
 
-    TraceLogger::GetInstance().LogValidInputPasted(mode);
+    TraceLogger::GetInstance()->LogInputPasted(Mode);
 
     m_model->SendCommand(UCM::Command::Clear);
-    for (auto&key : *keys)
+    for (int cmd : cmds)
     {
-        auto cmd = CommandFromButtonId(key);
-        m_model->SendCommand(cmd);
+        auto unitCmd = MapCalculatorCommandToButtonId(static_cast<CalculationManager::Command>(cmd));
+        m_model->SendCommand(unitCmd);
     }
-    delete keys;
 }
 
 String ^ UnitConverterViewModel::GetLocalizedAutomationName(_In_ String ^ displayvalue, _In_ String ^ unitname, _In_ String ^ format)

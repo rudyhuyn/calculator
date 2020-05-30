@@ -11,45 +11,38 @@ using namespace concurrency;
 using namespace CalculatorApp;
 using namespace CalculatorApp::Common;
 using namespace Platform;
-using namespace Platform::Collections;
 using namespace Windows::Foundation;
 using namespace Windows::System;
 using namespace Windows::ApplicationModel::DataTransfer;
-using namespace Windows::Foundation::Collections;
 
-StringReference PasteErrorString(L"NoOp");
 unsigned long long maxOperandNumber;
 const wregex regexTrimSpacesStart = wregex(L"^\\s+");
 const wregex regexTrimSpacesEnd = wregex(L"\\s+$");
 
-static const wstring c_validBasicCharacterSet = L"0123456789+-.e";
-static const wstring c_validStandardCharacterSet = c_validBasicCharacterSet + L"*/";
-static const wstring c_validScientificCharacterSet = c_validStandardCharacterSet + L"()^%";
-static const wstring c_validProgrammerCharacterSet = c_validStandardCharacterSet + L"()%abcdfABCDEF";
+String ^ CopyPasteManager::supportedFormats[] = { StandardDataFormats::Text };
 
-task<String^> CopyPasteManager::GetStringToPaste()
+task<String ^> CopyPasteManager::GetStringToPaste()
 {
     // Retrieve the text in the clipboard
     auto dataPackageView = Clipboard::GetContent();
 
     return create_task((dataPackageView->GetTextAsync(::StandardDataFormats::Text)))
-        .then([](String^ pastedText)
-    {
+        .then(
+            [](String ^ pastedText) {
+                wsmatch sm;
+                wstring text = std::wstring(pastedText->Data());
+                if (regex_search(text, sm, regexTrimSpacesStart))
+                {
+                    text.erase(sm.prefix().length(), sm.length());
+                }
 
-        wsmatch sm;
-        wstring text = std::wstring(pastedText->Data());
-        if (regex_search(text, sm, regexTrimSpacesStart))
-        {
-            text.erase(sm.prefix().length(), sm.length());
-        }
-
-        if (regex_search(text, sm, regexTrimSpacesEnd))
-        {
-            text.erase(sm.prefix().length(), sm.length());
-        }
-        return ref new Platform::String(text.data());
-    }
-    , task_continuation_context::use_arbitrary());
+                if (regex_search(text, sm, regexTrimSpacesEnd))
+                {
+                    text.erase(sm.prefix().length(), sm.length());
+                }
+                return ref new Platform::String(text.data());
+            },
+            task_continuation_context::use_arbitrary());
 }
 
 void CopyPasteManager::CopyToClipboard(String ^ stringToCopy)
@@ -60,28 +53,35 @@ void CopyPasteManager::CopyToClipboard(String ^ stringToCopy)
     Clipboard::SetContent(dataPackage);
 }
 
-
 int CopyPasteManager::ClipboardTextFormat()
 {
-    return Clipboard::GetContent()->Contains(StandardDataFormats::Text);
+    int result = -1;
+
+    auto dataPackageView = Clipboard::GetContent();
+
+    for (int i = 0; i < RTL_NUMBER_OF(supportedFormats); i++)
+    {
+        if (dataPackageView->Contains(supportedFormats[i]))
+        {
+            result = i;
+            break;
+        }
+    }
+    return result;
 }
 
-pair<size_t, uint64_t> CopyPasteManager::GetMaxOperandLengthAndValue(ViewMode mode, CategoryGroupType modeType, int programmerNumberBase, int bitLengthType)
+pair<size_t, uint64_t> CopyPasteManager::GetMaxOperandLengthAndValue(ViewMode mode, CategoryGroupType modeType, NumberBase programmerNumberBase, BitLength bitLengthType)
 {
-    constexpr size_t defaultMaxOperandLength = 0;
-    constexpr uint64_t defaultMaxValue = 0;
-    CopyPasteMaxOperandLengthAndValue res;
+    size_t maxLength = 0;
+    uint64_t maxValue = 0;
+
     if (mode == ViewMode::Standard)
     {
-        res.maxLength = MaxStandardOperandLength;
-        res.maxValue = defaultMaxValue;
-        return res;
+        maxLength = MaxStandardOperandLength;
     }
     else if (mode == ViewMode::Scientific)
     {
-        res.maxLength = MaxScientificOperandLength;
-        res.maxValue = defaultMaxValue;
-        return res;
+        maxLength = MaxScientificOperandLength;
     }
     else if (mode == ViewMode::Programmer)
     {
@@ -121,72 +121,69 @@ pair<size_t, uint64_t> CopyPasteManager::GetMaxOperandLengthAndValue(ViewMode mo
 
         unsigned int signBit = (programmerNumberBase == NumberBase::DecBase) ? 1 : 0;
 
-        const auto maxLength = static_cast<unsigned int>(ceil((bitLength - signBit) / bitsPerDigit));
-        const uint64_t maxValue = UINT64_MAX >> (MaxProgrammerBitLength - (bitLength - signBit));
-
-        res.maxLength = maxLength;
-        res.maxValue = maxValue;
-        return res;
+        maxLength = (size_t)ceil((bitLength - signBit) / bitsPerDigit);
+        maxValue = UINT64_MAX >> (MaxProgrammerBitLength - (bitLength - signBit));
     }
     else if (modeType == CategoryGroupType::Converter)
     {
-        res.maxLength = MaxConverterInputLength;
-        res.maxValue = defaultMaxValue;
-        return res;
+        maxLength = MaxConverterInputLength;
     }
 
-    res.maxLength = defaultMaxOperandLength;
-    res.maxValue = defaultMaxValue;
-    return res;
+    return make_pair(maxLength, maxValue);
 }
 
-
-ULONG32 CopyPasteManager::OperandLength(Platform::String ^ operand, ViewMode mode, CategoryGroupType modeType, NumberBase programmerNumberBase)
+size_t CopyPasteManager::OperandLength(wstring operand, ViewMode mode, CategoryGroupType modeType, NumberBase programmerNumberBase)
 {
-    if (modeType == CategoryGroupType::Converter)
+    size_t len = 0;
+    if (mode == ViewMode::Standard || mode == ViewMode::Scientific)
     {
-        return operand->Length();
+        len = StandardScientificOperandLength(operand);
+    }
+    else if (mode == ViewMode::Programmer)
+    {
+        len = ProgrammerOperandLength(operand, programmerNumberBase);
+    }
+    else if (modeType == CategoryGroupType::Converter)
+    {
+        len = operand.length();
     }
 
-    switch (mode)
-    {
-    case ViewMode::Standard:
-    case ViewMode::Scientific:
-        return StandardScientificOperandLength(operand);
-
-    case ViewMode::Programmer:
-        return ProgrammerOperandLength(operand, programmerNumberBase);
-
-    default:
-        return 0;
-    }
+    return len;
 }
 
-ULONG32 CopyPasteManager::StandardScientificOperandLength(Platform::String ^ operand)
+size_t CopyPasteManager::StandardScientificOperandLength(wstring operand)
 {
-    auto operandWstring = wstring(operand->Data());
-    const bool hasDecimal = operandWstring.find('.') != wstring::npos;
+    bool hasDecimal = false;
+    for (size_t i = 0; i < operand.length(); i++)
+    {
+        if (operand[i] == L'.')
+        {
+            hasDecimal = true;
+        }
+    }
 
     if (hasDecimal)
     {
-        if (operandWstring.length() >= 2)
+        if (operand.length() >= 2)
         {
-            if ((operandWstring[0] == L'0') && (operandWstring[1] == L'.'))
+            if ((operand[0] == L'0') && (operand[1] == L'.'))
             {
-                return static_cast<ULONG32>(operandWstring.length() - 2);
+                return operand.length() - 2;
             }
             else
             {
-                return static_cast<ULONG32>(operandWstring.length() - 1);
+                return operand.length() - 1;
             }
         }
     }
 
-    return static_cast<ULONG32>(operandWstring.length());
+    return operand.length();
 }
 
-ULONG32 CopyPasteManager::ProgrammerOperandLength(Platform::String ^ operand, NumberBase numberBase)
+size_t CopyPasteManager::ProgrammerOperandLength(const wstring& operand, NumberBase numberBase)
 {
+    size_t len = operand.length();
+
     vector<wstring> prefixes{};
     vector<wstring> suffixes{};
     switch (numberBase)
@@ -207,21 +204,19 @@ ULONG32 CopyPasteManager::ProgrammerOperandLength(Platform::String ^ operand, Nu
         break;
     default:
         // No defined prefixes/suffixes
-        return 0;
+        break;
     }
 
     // UInt suffixes are common across all modes
     const array<wstring, 5> uintSuffixes = { L"ULL", L"UL", L"LL", L"U", L"L" };
     suffixes.insert(suffixes.end(), uintSuffixes.begin(), uintSuffixes.end());
 
-    wstring operandUpper = wstring(operand->Data());
+    wstring operandUpper = operand;
     transform(operandUpper.begin(), operandUpper.end(), operandUpper.begin(), towupper);
-
-    size_t len = operand->Length();
 
     // Detect if there is a suffix and subtract its length
     // Check suffixes first to allow e.g. "0b" to result in length 1 (value 0), rather than length 0 (no value).
-    for (const auto& suffix : suffixes)
+    for (const wstring& suffix : suffixes)
     {
         if (len < suffix.length())
         {
@@ -236,7 +231,7 @@ ULONG32 CopyPasteManager::ProgrammerOperandLength(Platform::String ^ operand, Nu
     }
 
     // Detect if there is a prefix and subtract its length
-    for (const auto& prefix : prefixes)
+    for (const wstring& prefix : prefixes)
     {
         if (len < prefix.length())
         {
@@ -250,7 +245,7 @@ ULONG32 CopyPasteManager::ProgrammerOperandLength(Platform::String ^ operand, Nu
         }
     }
 
-    return static_cast<ULONG32>(len);
+    return len;
 }
 
 // return wstring after removing characters like space, comma, double quotes, and monetary prefix currency symbols supported by the Windows keyboard:

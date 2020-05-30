@@ -135,7 +135,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -215,7 +215,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -255,7 +255,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -322,14 +322,6 @@
     <ClInclude Include="DataLoaders\UnitConverterDataConstants.h" />
     <ClInclude Include="DataLoaders\UnitConverterDataLoader.h" />
     <ClInclude Include="DateCalculatorViewModel.h" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\BisonParser.hpp" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\location.hh" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\position.hh" />
-    <ClInclude Include="ExpressionParser\BisonGeneratedFiles\stack.hh" />
-    <ClInclude Include="ExpressionParser\BisonParserParam.h" />
-    <ClInclude Include="ExpressionParser\KeyChained.h" />
-    <ClInclude Include="ExpressionParser\Lexer.h" />
-    <ClInclude Include="ExpressionParser\Parser.h" />
     <ClInclude Include="GraphingCalculatorEnums.h" />
     <ClInclude Include="GraphingCalculator\EquationViewModel.h" />
     <ClInclude Include="GraphingCalculator\GraphingCalculatorViewModel.h" />
@@ -367,10 +359,6 @@
     <ClCompile Include="GraphingCalculator\EquationViewModel.cpp" />
     <ClCompile Include="GraphingCalculator\GraphingCalculatorViewModel.cpp" />
     <ClCompile Include="GraphingCalculator\GraphingSettingsViewModel.cpp" />
-    <ClCompile Include="ExpressionParser\BisonGeneratedFiles\BisonParser.cpp" />
-    <ClCompile Include="ExpressionParser\BisonParserParam.cpp" />
-    <ClCompile Include="ExpressionParser\Lexer.cpp" />
-    <ClCompile Include="ExpressionParser\Parser.cpp" />
     <ClCompile Include="HistoryItemViewModel.cpp" />
     <ClCompile Include="HistoryViewModel.cpp" />
     <ClCompile Include="MemoryItemViewModel.cpp" />
@@ -390,6 +378,9 @@
   <ItemGroup>
     <ProjectReference Include="..\CalcManager\CalcManager.vcxproj">
       <Project>{311e866d-8b93-4609-a691-265941fee101}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\ExpressionParser\ExpressionParser.vcxproj">
+      <Project>{66b82af2-74d4-4e2d-82ce-abc9fabb8e76}</Project>
     </ProjectReference>
     <ProjectReference Include="..\GraphControl\GraphControl.vcxproj">
       <Project>{e727a92b-f149-492c-8117-c039a298719b}</Project>
@@ -417,7 +408,6 @@
   </Choose>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json" />
-    <None Include="ExpressionParser\BisonParser.y" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "Common/CalculatorButtonUser.h"
-#include "Common/NavCategory.h"
+#include "CalcManager/Command.h"
+#include "ParserMode.h"
 
 #define LexemeId int
 
@@ -28,8 +28,10 @@ public:
 class LexInfoString : public LexInfo
 {
 public:
-    LexInfoString(LexemeId id, std::wstring text) :LexInfo(id), m_refText(text), m_refTextCachedSize(text.length()) {}
+    LexInfoString(LexemeId id, std::wstring text) :LexInfo(static_cast<int>(id)), m_refText(text), m_refTextCachedSize(static_cast<int>(text.length())) {}
     int CheckLex(const std::wstring::const_iterator &begin, const std::wstring::const_iterator &end);
+private:
+    static bool CaseInsensitiveCompare(wchar_t a, wchar_t b);
 public:
     std::wstring m_refText;
     int m_refTextCachedSize;
@@ -48,7 +50,7 @@ public:
 class Lexeme
 {
 public:
-    Lexeme(LexemeId id, std::wstring str, std::vector<CalculatorApp::NumbersAndOperatorsEnum> * keys) : Lexeme(id, str)
+    Lexeme(LexemeId id, std::wstring str, std::vector<CalculationManager::Command> * keys) : Lexeme(id, str)
     {
         m_keys = keys;
     }
@@ -56,15 +58,30 @@ public:
 public:
     std::wstring m_str;
     LexemeId m_id;
-    std::vector<CalculatorApp::NumbersAndOperatorsEnum> * m_keys;
+    std::vector<CalculationManager::Command> * m_keys;
 };
 
 class LexemeReader
 {
 public:
-    bool GetLexemes(std::wstring item, CalculatorApp::Common::ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, std::vector<Lexeme *>** lexemes);
+    bool GetLexemes(
+        std::wstring item,
+        ExpressionParser::ParserMode mode,
+        int base,
+        const std::wstring& decimalSeparator,
+        const std::wstring& thousandSeparator,
+        std::vector<Lexeme*>** lexemes);
+
 protected:
-    int ParseNumber(const std::wstring::const_iterator &begin, const std::wstring::const_iterator &end, CalculatorApp::Common::ViewMode mode, int base, const std::wstring &decimalSeparator, const std::wstring &thousandSeparator, std::vector<CalculatorApp::NumbersAndOperatorsEnum>** keys);
+    int ParseNumber(
+        const std::wstring::const_iterator& begin,
+        const std::wstring::const_iterator& end,
+        ExpressionParser::ParserMode mode,
+        int base,
+        const std::wstring& decimalSeparator,
+        const std::wstring& thousandSeparator,
+        std::vector<CalculationManager::Command>** keys);
+
 private:
     std::vector<Lexeme *>::const_iterator iterator;
 };

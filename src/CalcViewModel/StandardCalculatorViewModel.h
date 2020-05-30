@@ -7,9 +7,10 @@
 #include "Common/CalculatorDisplay.h"
 #include "Common/EngineResourceProvider.h"
 #include "Common/CalculatorButtonUser.h"
+#include "Common/NumberBase.h"
+#include "Common/BitLength.h"
 #include "HistoryViewModel.h"
 #include "MemoryItemViewModel.h"
-#include "ExpressionParser/Parser.h"
 
 namespace CalculatorUnitTests
 {
@@ -245,8 +246,7 @@ namespace CalculatorApp
             void ResetCalcManager(bool clearMemory);
             void SendCommandToCalcManager(int command);
 
-        internal:
-            void OnPaste(Platform::String ^ pastedString);
+        internal : void OnPaste(Platform::String ^ pastedString, CalculatorApp::Common::ViewMode mode);
             void OnCopyCommand(Platform::Object ^ parameter);
             void OnPasteCommand(Platform::Object ^ parameter);
 
@@ -311,7 +311,7 @@ namespace CalculatorApp
             CalculatorDisplay m_calculatorDisplay;
             CalculatorApp::EngineResourceProvider m_resourceProvider;
             CalculationManager::CalculatorManager m_standardCalculatorManager;
-            CalcExpressionParser m_parser;
+            ExpressionParser::CalcExpressionParser ^ m_parser;
             Platform::String^ m_expressionAutomationNameFormat;
             Platform::String^ m_localizedCalculationResultAutomationFormat;
             Platform::String^ m_localizedCalculationResultDecimalAutomationFormat;
