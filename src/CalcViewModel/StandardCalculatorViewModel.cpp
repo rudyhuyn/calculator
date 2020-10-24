@@ -14,6 +14,7 @@ using namespace CalculatorApp::Common;
 using namespace CalculatorApp::Common::Automation;
 using namespace CalculatorApp::ViewModel;
 using namespace CalculationManager;
+using namespace ExpressionParser;
 using namespace concurrency;
 using namespace Platform;
 using namespace Platform::Collections;
@@ -95,6 +96,7 @@ StandardCalculatorViewModel::StandardCalculatorViewModel()
     , m_localizedNoRightParenthesisAddedFormat(nullptr)
     , m_TokenPosition(-1)
     , m_isLastOperationHistoryLoad(false)
+    , m_parser(ref new CalcExpressionParser())
 {
     WeakReference calculatorViewModel(this);
     auto appResourceProvider = AppResourceProvider::GetInstance();
@@ -134,23 +136,14 @@ StandardCalculatorViewModel::StandardCalculatorViewModel()
     AreProgrammerRadixOperatorsEnabled = false;
 }
 
-String ^ StandardCalculatorViewModel::LocalizeDisplayValue(_In_ wstring const& displayValue, _In_ bool isError)
+String ^ StandardCalculatorViewModel::LocalizeDisplayValue(_In_ wstring const& displayValue)
 {
     wstring result(displayValue);
-
     LocalizationSettings::GetInstance().LocalizeDisplayValue(&result);
-
-    // WINBLUE: 440747 - In BiDi languages, error messages need to be wrapped in LRE/PDF
-    if (isError && m_isRtlLanguage)
-    {
-        result.insert(result.begin(), Utils::LRE);
-        result.push_back(Utils::PDF);
-    }
-
     return ref new Platform::String(result.c_str());
 }
 
-String ^ StandardCalculatorViewModel::CalculateNarratorDisplayValue(_In_ wstring const& displayValue, _In_ String ^ localizedDisplayValue, _In_ bool isError)
+String ^ StandardCalculatorViewModel::CalculateNarratorDisplayValue(_In_ wstring const& displayValue, _In_ String ^ localizedDisplayValue)
 {
     String ^ localizedValue = localizedDisplayValue;
     String ^ automationFormat = m_localizedCalculationResultAutomationFormat;
@@ -159,7 +152,7 @@ String ^ StandardCalculatorViewModel::CalculateNarratorDisplayValue(_In_ wstring
     if (Utils::IsLastCharacterTarget(displayValue, m_decimalSeparator))
     {
         // remove the decimal separator, to avoid a long pause between words
-        localizedValue = LocalizeDisplayValue(displayValue.substr(0, displayValue.length() - 1), isError);
+        localizedValue = LocalizeDisplayValue(displayValue.substr(0, displayValue.length() - 1));
 
         // Use a format which has a word in the decimal separator's place
         // "The Display is 10 point"
@@ -195,11 +188,11 @@ String ^ StandardCalculatorViewModel::GetNarratorStringReadRawNumbers(_In_ Strin
 
 void StandardCalculatorViewModel::SetPrimaryDisplay(_In_ String ^ displayStringValue, _In_ bool isError)
 {
-    String ^ localizedDisplayStringValue = LocalizeDisplayValue(displayStringValue->Data(), isError);
+    String ^ localizedDisplayStringValue = LocalizeDisplayValue(displayStringValue->Data());
 
     // Set this variable before the DisplayValue is modified, Otherwise the DisplayValue will
     // not match what the narrator is saying
-    m_CalculationResultAutomationName = CalculateNarratorDisplayValue(displayStringValue->Data(), localizedDisplayStringValue, isError);
+    m_CalculationResultAutomationName = CalculateNarratorDisplayValue(displayStringValue->Data(), localizedDisplayStringValue);
 
     AreAlwaysOnTopResultsUpdated = false;
     if (DisplayValue != localizedDisplayStringValue)
@@ -260,8 +253,7 @@ void StandardCalculatorViewModel::SetNoParenAddedNarratorAnnouncement()
 {
     if (m_localizedNoRightParenthesisAddedFormat == nullptr)
     {
-        m_localizedNoRightParenthesisAddedFormat =
-            AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::NoParenthesisAdded);
+        m_localizedNoRightParenthesisAddedFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::NoParenthesisAdded);
     }
 
     Announcement = CalculatorAnnouncement::GetNoRightParenthesisAddedAnnouncement(m_localizedNoRightParenthesisAddedFormat);
@@ -418,7 +410,7 @@ void StandardCalculatorViewModel::SetMemorizedNumbers(const vector<wstring>& new
             MemoryItemViewModel ^ memorySlot = ref new MemoryItemViewModel(this);
             memorySlot->Position = 0;
             localizer.LocalizeDisplayValue(&stringValue);
-            memorySlot->Value = Utils::LRO + ref new String(stringValue.c_str()) + Utils::PDF;
+            memorySlot->Value = ref new String(stringValue.c_str());
 
             MemorizedNumbers->InsertAt(0, memorySlot);
             IsMemoryEmpty = IsAlwaysOnTop;
@@ -440,7 +432,7 @@ void StandardCalculatorViewModel::SetMemorizedNumbers(const vector<wstring>& new
             // If the value is different, update the value
             if (MemorizedNumbers->GetAt(i)->Value != StringReference(newStringValue.c_str()))
             {
-                MemorizedNumbers->GetAt(i)->Value = Utils::LRO + ref new String(newStringValue.c_str()) + Utils::PDF;
+                MemorizedNumbers->GetAt(i)->Value = ref new String(newStringValue.c_str());
             }
         }
     }
@@ -729,8 +721,8 @@ void StandardCalculatorViewModel::OnPasteCommand(Object ^ parameter)
     }
 
     // Ensure that the paste happens on the UI thread
-    create_task(CopyPasteManager::GetStringToPaste(mode, NavCategory::GetGroupType(mode), numberBase, bitLengthType))
-        .then([that, mode](String ^ pastedString) { that->OnPaste(pastedString); }, concurrency::task_continuation_context::use_current());
+    CopyPasteManager::GetStringToPaste().then(
+        [this, mode](String ^ pastedString) { OnPaste(pastedString, mode); }, concurrency::task_continuation_context::use_current());
 }
 
 CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(NumbersAndOperatorsEnum operation)
@@ -738,155 +730,60 @@ CalculationManager::Command StandardCalculatorViewModel::ConvertToOperatorsEnum(
     return safe_cast<Command>(operation);
 }
 
-void StandardCalculatorViewModel::OnPaste(String ^ pastedString)
+void StandardCalculatorViewModel::OnPaste(String ^ pastedString, ViewMode mode)
 {
-    // If pastedString is invalid("NoOp") then display pasteError else process the string
-    if (CopyPasteManager::IsErrorMessage(pastedString))
+    unsigned int base = 0;
+    switch (m_CurrentRadixType)
+    {
+    case NumberBase::DecBase:
+        base = 10;
+        break;
+    case NumberBase::OctBase:
+        base = 8;
+        break;
+    case NumberBase::HexBase:
+        base = 16;
+        break;
+    case NumberBase::BinBase:
+        base = 2;
+        break;
+    }
+
+    const auto& localizationSettings = LocalizationSettings::GetInstance();
+
+    ExpressionParser::ParserMode expressionParserMode;
+    switch (mode)
+    {
+    case ViewMode::Programmer:
+        expressionParserMode = ExpressionParser::ParserMode::Programmer;
+        break;
+    case ViewMode::Scientific:
+        expressionParserMode = ExpressionParser::ParserMode::Scientific;
+        break;
+    default:
+        expressionParserMode = ExpressionParser::ParserMode::Standard;
+        break;
+    }
+
+    auto commands = m_parser->Parse(
+        ref new String(pastedString->Data()),
+        expressionParserMode,
+        base,
+        ref new String(localizationSettings.GetDecimalSeparatorStr().c_str()),
+        ref new String(localizationSettings.GetNumberGroupingSeparatorStr().c_str()));
+
+    // If pastedString is invalid then display pasteError else process the string
+    if (commands == nullptr)
     {
         this->DisplayPasteError();
         return;
     }
 
-    TraceLogger::GetInstance()->LogInputPasted(GetCalculatorMode());
-    bool isFirstLegalChar = true;
+    TraceLogger::GetInstance()->LogInputPasted(mode);
     m_standardCalculatorManager.SendCommand(Command::CommandCENTR);
-    bool sendNegate = false;
-    bool processedDigit = false;
-    bool sentEquals = false;
-    bool isPreviousOperator = false;
-
-    vector<bool> negateStack;
-
-    // Iterate through each character pasted, and if it's valid, send it to the model.
-    auto it = pastedString->Begin();
-
-    while (it != pastedString->End())
+    for (int command : commands)
     {
-        bool sendCommand = true;
-        auto buttonInfo = MapCharacterToButtonId(*it);
-
-        NumbersAndOperatorsEnum mappedNumOp = buttonInfo.buttonId;
-        bool canSendNegate = buttonInfo.canSendNegate;
-
-        if (mappedNumOp == NumbersAndOperatorsEnum::None)
-        {
-            ++it;
-            continue;
-        }
-
-        if (isFirstLegalChar || isPreviousOperator)
-        {
-            isFirstLegalChar = false;
-            isPreviousOperator = false;
-
-            // If the character is a - sign, send negate
-            // after sending the next legal character.  Send nothing now, or
-            // it will be ignored.
-            if (NumbersAndOperatorsEnum::Subtract == mappedNumOp)
-            {
-                sendNegate = true;
-                sendCommand = false;
-            }
-
-            // Support (+) sign prefix
-            if (NumbersAndOperatorsEnum::Add == mappedNumOp)
-            {
-                sendCommand = false;
-            }
-        }
-
-        switch (mappedNumOp)
-        {
-            // Opening parenthesis starts a new expression and pushes negation state onto the stack
-        case NumbersAndOperatorsEnum::OpenParenthesis:
-            negateStack.push_back(sendNegate);
-            sendNegate = false;
-            break;
-
-            // Closing parenthesis pops the negation state off the stack and sends it down to the calc engine
-        case NumbersAndOperatorsEnum::CloseParenthesis:
-            if (!negateStack.empty())
-            {
-                sendNegate = negateStack.back();
-                negateStack.pop_back();
-                canSendNegate = true;
-            }
-            else
-            {
-                // Don't send a closing parenthesis if a matching opening parenthesis hasn't been sent already
-                sendCommand = false;
-            }
-            break;
-
-        case NumbersAndOperatorsEnum::Zero:
-        case NumbersAndOperatorsEnum::One:
-        case NumbersAndOperatorsEnum::Two:
-        case NumbersAndOperatorsEnum::Three:
-        case NumbersAndOperatorsEnum::Four:
-        case NumbersAndOperatorsEnum::Five:
-        case NumbersAndOperatorsEnum::Six:
-        case NumbersAndOperatorsEnum::Seven:
-        case NumbersAndOperatorsEnum::Eight:
-        case NumbersAndOperatorsEnum::Nine:
-            processedDigit = true;
-            break;
-
-        case NumbersAndOperatorsEnum::Add:
-        case NumbersAndOperatorsEnum::Subtract:
-        case NumbersAndOperatorsEnum::Multiply:
-        case NumbersAndOperatorsEnum::Divide:
-            isPreviousOperator = true;
-            break;
-        }
-
-        if (sendCommand)
-        {
-            sentEquals = (mappedNumOp == NumbersAndOperatorsEnum::Equals);
-            Command cmdenum = ConvertToOperatorsEnum(mappedNumOp);
-            m_standardCalculatorManager.SendCommand(cmdenum);
-
-            // The CalcEngine state machine won't allow the negate command to be sent before any
-            // other digits, so instead a flag is set and the command is sent after the first appropriate
-            // command.
-            if (sendNegate)
-            {
-                if (canSendNegate)
-                {
-                    Command cmdNegate = ConvertToOperatorsEnum(NumbersAndOperatorsEnum::Negate);
-                    m_standardCalculatorManager.SendCommand(cmdNegate);
-                }
-
-                // Can't send negate on a leading zero, so wait until the appropriate time to send it.
-                if (NumbersAndOperatorsEnum::Zero != mappedNumOp && NumbersAndOperatorsEnum::Decimal != mappedNumOp)
-                {
-                    sendNegate = false;
-                }
-            }
-        }
-
-        // Handle exponent and exponent sign (...e+... or ...e-... or ...e...)
-        if (mappedNumOp == NumbersAndOperatorsEnum::Exp)
-        {
-            // Check the following item
-            switch (MapCharacterToButtonId(*(it + 1)).buttonId)
-            {
-            case NumbersAndOperatorsEnum::Subtract:
-            {
-                Command cmdNegate = ConvertToOperatorsEnum(NumbersAndOperatorsEnum::Negate);
-                m_standardCalculatorManager.SendCommand(cmdNegate);
-                ++it;
-            }
-            break;
-            case NumbersAndOperatorsEnum::Add:
-            {
-                // Nothing to do, skip to the next item
-                ++it;
-            }
-            break;
-            }
-        }
-
-        ++it;
+        m_standardCalculatorManager.SendCommand(static_cast<Command>(command));
     }
 }
 
@@ -1012,8 +909,8 @@ ButtonInfo StandardCalculatorViewModel::MapCharacterToButtonId(char16 ch)
     {
         if (LocalizationSettings::GetInstance().IsLocalizedDigit(ch))
         {
-            result.buttonId = NumbersAndOperatorsEnum::Zero
-                              + static_cast<NumbersAndOperatorsEnum>(ch - LocalizationSettings::GetInstance().GetDigitSymbolFromEnUsDigit('0'));
+            result.buttonId =
+                NumbersAndOperatorsEnum::Zero + static_cast<NumbersAndOperatorsEnum>(ch - LocalizationSettings::GetInstance().GetDigitSymbolFromEnUsDigit('0'));
             result.canSendNegate = true;
         }
     }
@@ -1464,7 +1361,7 @@ void StandardCalculatorViewModel::Recalculate(bool fromHistory)
 bool StandardCalculatorViewModel::IsOpnd(Command command)
 {
     static constexpr Command opnd[] = { Command::Command0, Command::Command1, Command::Command2, Command::Command3, Command::Command4,  Command::Command5,
-                              Command::Command6, Command::Command7, Command::Command8, Command::Command9, Command::CommandPNT };
+                                        Command::Command6, Command::Command7, Command::Command8, Command::Command9, Command::CommandPNT };
 
     return find(begin(opnd), end(opnd), command) != end(opnd);
 }
@@ -1472,9 +1369,9 @@ bool StandardCalculatorViewModel::IsOpnd(Command command)
 bool StandardCalculatorViewModel::IsUnaryOp(Command command)
 {
     static constexpr Command unaryOp[] = { Command::CommandSQRT,  Command::CommandFAC,  Command::CommandSQR,   Command::CommandLOG,
-                                 Command::CommandPOW10, Command::CommandPOWE, Command::CommandLN,    Command::CommandREC,
-                                 Command::CommandSIGN,  Command::CommandSINH, Command::CommandASINH, Command::CommandCOSH,
-                                 Command::CommandACOSH, Command::CommandTANH, Command::CommandATANH, Command::CommandCUB };
+                                           Command::CommandPOW10, Command::CommandPOWE, Command::CommandLN,    Command::CommandREC,
+                                           Command::CommandSIGN,  Command::CommandSINH, Command::CommandASINH, Command::CommandCOSH,
+                                           Command::CommandACOSH, Command::CommandTANH, Command::CommandATANH, Command::CommandCUB };
 
     if (find(begin(unaryOp), end(unaryOp), command) != end(unaryOp))
     {
@@ -1491,9 +1388,8 @@ bool StandardCalculatorViewModel::IsUnaryOp(Command command)
 
 bool StandardCalculatorViewModel::IsTrigOp(Command command)
 {
-    static constexpr Command trigOp[] = {
-        Command::CommandSIN, Command::CommandCOS, Command::CommandTAN, Command::CommandASIN, Command::CommandACOS, Command::CommandATAN
-    };
+    static constexpr Command trigOp[] = { Command::CommandSIN,  Command::CommandCOS,  Command::CommandTAN,
+                                          Command::CommandASIN, Command::CommandACOS, Command::CommandATAN };
 
     return find(begin(trigOp), end(trigOp), command) != end(trigOp);
 }
@@ -1501,7 +1397,7 @@ bool StandardCalculatorViewModel::IsTrigOp(Command command)
 bool StandardCalculatorViewModel::IsBinOp(Command command)
 {
     static constexpr Command binOp[] = { Command::CommandADD, Command::CommandSUB,  Command::CommandMUL, Command::CommandDIV,
-                               Command::CommandEXP, Command::CommandROOT, Command::CommandMOD, Command::CommandPWR };
+                                         Command::CommandEXP, Command::CommandROOT, Command::CommandMOD, Command::CommandPWR };
 
     return find(begin(binOp), end(binOp), command) != end(binOp);
 }
@@ -1576,10 +1472,10 @@ void StandardCalculatorViewModel::UpdateProgrammerPanelDisplay()
     localizer.LocalizeDisplayValue(&octalDisplayString);
     localizer.LocalizeDisplayValue(&binaryDisplayString);
 
-    HexDisplayValue = Utils::LRO + ref new Platform::String(hexDisplayString.c_str()) + Utils::PDF;
-    DecimalDisplayValue = Utils::LRO + ref new Platform::String(decimalDisplayString.c_str()) + Utils::PDF;
-    OctalDisplayValue = Utils::LRO + ref new Platform::String(octalDisplayString.c_str()) + Utils::PDF;
-    BinaryDisplayValue = Utils::LRO + ref new Platform::String(binaryDisplayString.c_str()) + Utils::PDF;
+    HexDisplayValue = ref new Platform::String(hexDisplayString.c_str());
+    DecimalDisplayValue = ref new Platform::String(decimalDisplayString.c_str());
+    OctalDisplayValue = ref new Platform::String(octalDisplayString.c_str());
+    BinaryDisplayValue = ref new Platform::String(binaryDisplayString.c_str());
     HexDisplayValue_AutomationName = GetLocalizedStringFormat(m_localizedHexaDecimalAutomationFormat, GetNarratorStringReadRawNumbers(HexDisplayValue));
     DecDisplayValue_AutomationName = GetLocalizedStringFormat(m_localizedDecimalAutomationFormat, DecimalDisplayValue);
     OctDisplayValue_AutomationName = GetLocalizedStringFormat(m_localizedOctalAutomationFormat, GetNarratorStringReadRawNumbers(OctalDisplayValue));
@@ -1750,12 +1646,11 @@ NarratorAnnouncement ^ StandardCalculatorViewModel::GetDisplayUpdatedNarratorAnn
     {
         if (m_localizedButtonPressFeedbackAutomationFormat == nullptr)
         {
-            m_localizedButtonPressFeedbackAutomationFormat = AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::ButtonPressFeedbackFormat);
+            m_localizedButtonPressFeedbackAutomationFormat =
+                AppResourceProvider::GetInstance()->GetResourceString(CalculatorResourceKeys::ButtonPressFeedbackFormat);
         }
         announcement = LocalizationStringUtil::GetLocalizedString(
-            m_localizedButtonPressFeedbackAutomationFormat,
-            m_CalculationResultAutomationName,
-            m_feedbackForButtonPress);
+            m_localizedButtonPressFeedbackAutomationFormat, m_CalculationResultAutomationName, m_feedbackForButtonPress);
     }
 
     // Make sure we don't accidentally repeat an announcement.

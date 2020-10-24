@@ -241,9 +241,6 @@ namespace Utils
         };
     }
 
-    const wchar_t LRE = 0x202a; // Left-to-Right Embedding
-    const wchar_t PDF = 0x202c; // Pop Directional Formatting
-    const wchar_t LRO = 0x202d; // Left-to-Right Override
 
     // Regular DependencyProperty
     template <typename TOwner, typename TType>
@@ -412,6 +409,7 @@ namespace Utils
 
     Platform::String ^ EscapeHtmlSpecialCharacters(Platform::String ^ originalString, std::shared_ptr<std::vector<wchar_t>> specialCharacters = nullptr);
 
+    Windows::UI::Xaml::Media::SolidColorBrush ^ GetContrastColor(Windows::UI::Color backgroundColor);
 }
 
 // This goes into the header to define the property, in the public: section of the class

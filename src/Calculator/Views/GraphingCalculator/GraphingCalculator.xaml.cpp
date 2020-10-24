@@ -78,6 +78,8 @@ GraphingCalculator::GraphingCalculator()
     // Update where the pointer value is (ie: where the user cursor from keyboard inputs moves the point to)
     GraphingControl->PointerValueChangedEvent += ref new PointerValueChangedEventHandler(this, &GraphingCalculator::OnPointerPointChanged);
 
+    m_GraphingControlLoadedToken = GraphingControl->Loaded += ref new RoutedEventHandler(this, &GraphingCalculator::OnGraphingCalculatorLoaded);
+
     GraphingControl->UseCommaDecimalSeperator = LocalizationSettings::GetInstance().GetDecimalSeparator() == ',';
 
     // OemMinus and OemAdd aren't declared in the VirtualKey enum, we can't add this accelerator XAML-side
@@ -90,6 +92,11 @@ GraphingCalculator::GraphingCalculator()
     virtualKey->Key = (VirtualKey)187; // OemAdd key
     virtualKey->Modifiers = VirtualKeyModifiers::Control;
     ZoomInButton->KeyboardAccelerators->Append(virtualKey);
+
+    if (Windows::Foundation::Metadata::ApiInformation::IsTypePresent(L"Windows.UI.Xaml.Media.ThemeShadow"))
+    {
+        SharedShadow->Receivers->Append(GraphingControl);
+    }
 
     m_accessibilitySettings->HighContrastChanged +=
         ref new TypedEventHandler<AccessibilitySettings ^, Object ^>(this, &GraphingCalculator::OnHighContrastChanged);
@@ -113,8 +120,6 @@ GraphingCalculator::GraphingCalculator()
         IsMatchAppTheme = false;
         TraceLogger::GetInstance()->LogGraphTheme(L"IsAlwaysLightTheme");
     }
-
-    UpdateGraphTheme();
 }
 
 void GraphingCalculator::OnShowTracePopupChanged(bool newValue)
@@ -169,6 +174,11 @@ void GraphingCalculator::OnEquationsVectorChanged(IObservableVector<EquationView
         {
             GraphingControl->Equations->RemoveAt(event->Index);
 
+            if (GraphingControl->Equations->Size == 1 && GraphingControl->Equations->GetAt(0)->Expression->IsEmpty())
+            {
+                IsManualAdjustment = false;
+            }
+
             return;
         }
     }
@@ -197,12 +207,44 @@ void GraphingCalculator::OnEquationsVectorChanged(IObservableVector<EquationView
     GraphingControl->PlotGraph(false);
 }
 
+wstringstream GraphingCalculator::FormatTraceValue(double min, double max, float pointValue)
+{
+    wstringstream traceValueString;
+
+    // Extract precision we will round to
+    auto precision = static_cast<int>(floor(log10(max - min)) - 3);
+
+    // Determine if we want to show scientific notation instead
+    if (precision <= -7 || precision >= 7)
+    {
+        traceValueString << scientific;
+    }
+    else
+    {
+        traceValueString << fixed;
+    }
+
+    // If we are rounding to a decimal place, set the precision
+    if (precision < 0)
+    {
+        traceValueString << setprecision(::min(7, abs(precision))) << pointValue;
+    }
+    else
+    {
+        traceValueString << setprecision(0) << pointValue;
+    }
+
+    return traceValueString;
+}
+
 void GraphingCalculator::OnTracePointChanged(Point newPoint)
 {
     wstringstream traceValueString;
 
-    // TODO: The below precision should ideally be dynamic based on the current scale of the graph.
-    traceValueString << "(" << fixed << setprecision(1) << newPoint.X << ", " << fixed << setprecision(1) << newPoint.Y << ")";
+    double xAxisMin, xAxisMax, yAxisMin, yAxisMax;
+    GraphingControl->GetDisplayRanges(&xAxisMin, &xAxisMax, &yAxisMin, &yAxisMax);
+
+    traceValueString << "(" << FormatTraceValue(xAxisMin, xAxisMax, newPoint.X).str() << ", " << FormatTraceValue(yAxisMin, yAxisMax, newPoint.Y).str() << ")";
 
     TraceValue->Text = ref new String(traceValueString.str().c_str());
 
@@ -240,11 +282,26 @@ void GraphingCalculator::ViewModel::set(GraphingCalculatorViewModel ^ vm)
     }
 }
 
-void CalculatorApp::GraphingCalculator::OnShareClick(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
+void GraphingCalculator::OnShareClick(Object ^ sender, RoutedEventArgs ^ e)
 {
     // Ask the OS to start a share action.
-    DataTransferManager::ShowShareUI();
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::Share);
+    try
+    {
+        DataTransferManager::ShowShareUI();
+        TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::Share, GraphButtonValue::None);
+    }
+    catch (COMException ^ ex)
+    {
+        if (ex->HResult == RPC_E_SERVERCALL_RETRYLATER)
+        {
+            ShowShareError();
+            TraceLogger::GetInstance()->LogPlatformException(ViewMode::Graphing, __FUNCTIONW__, ex);
+        }
+        else
+        {
+            throw;
+        }
+    }
 }
 
 // When share is invoked (by the user or programmatically) the event handler we registered will be called to populate the data package with the
@@ -352,15 +409,19 @@ void GraphingCalculator::OnDataRequested(DataTransferManager ^ sender, DataReque
     }
     catch (Exception ^ ex)
     {
+        ShowShareError();
         TraceLogger::GetInstance()->LogPlatformException(ViewMode::Graphing, __FUNCTIONW__, ex);
-
-        // Something went wrong, notify the user.
-
-        auto errDialog = ref new ContentDialog();
-        errDialog->Content = resourceLoader->GetString(L"ShareActionErrorMessage");
-        errDialog->CloseButtonText = resourceLoader->GetString(L"ShareActionErrorOk");
-        errDialog->ShowAsync();
     }
+}
+
+void GraphingCalculator::ShowShareError()
+{
+    // Something went wrong, notify the user.
+    auto resourceLoader = ResourceLoader::GetForCurrentView();
+    auto errDialog = ref new ContentDialog();
+    errDialog->Content = resourceLoader->GetString(L"ShareActionErrorMessage");
+    errDialog->CloseButtonText = resourceLoader->GetString(L"ShareActionErrorOk");
+    errDialog->ShowAsync();
 }
 
 void GraphingCalculator::GraphingControl_VariablesUpdated(Object ^, Object ^)
@@ -376,19 +437,13 @@ void GraphingCalculator::OnVariableChanged(Platform::Object ^ sender, VariableCh
 void GraphingCalculator::OnZoomInCommand(Object ^ /* parameter */)
 {
     GraphingControl->ZoomFromCenter(zoomInScale);
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ZoomIn);
+    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ZoomIn, GraphButtonValue::None);
 }
 
 void GraphingCalculator::OnZoomOutCommand(Object ^ /* parameter */)
 {
     GraphingControl->ZoomFromCenter(zoomOutScale);
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ZoomOut);
-}
-
-void GraphingCalculator::OnZoomResetCommand(Object ^ /* parameter */)
-{
-    GraphingControl->ResetGrid();
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ZoomReset);
+    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ZoomOut, GraphButtonValue::None);
 }
 
 String ^ GraphingCalculator::GetTracingLegend(Platform::IBox<bool> ^ isTracing)
@@ -405,7 +460,7 @@ void GraphingCalculator::GraphingControl_LostFocus(Object ^ sender, RoutedEventA
     {
         if (ActiveTracing->Equals(FocusManager::GetFocusedElement()) && ActiveTracing->IsPressed)
         {
-            m_ActiveTracingPointerCaptureLost = ActiveTracing->PointerCaptureLost +=
+            m_ActiveTracingPointerCaptureLostToken = ActiveTracing->PointerCaptureLost +=
                 ref new Windows::UI::Xaml::Input::PointerEventHandler(this, &CalculatorApp::GraphingCalculator::ActiveTracing_PointerCaptureLost);
         }
         else
@@ -418,10 +473,10 @@ void GraphingCalculator::GraphingControl_LostFocus(Object ^ sender, RoutedEventA
 
 void CalculatorApp::GraphingCalculator::ActiveTracing_PointerCaptureLost(Platform::Object ^ sender, Windows::UI::Xaml::Input::PointerRoutedEventArgs ^ e)
 {
-    if (m_ActiveTracingPointerCaptureLost.Value != 0)
+    if (m_ActiveTracingPointerCaptureLostToken.Value != 0)
     {
-        ActiveTracing->PointerCaptureLost -= m_ActiveTracingPointerCaptureLost;
-        m_ActiveTracingPointerCaptureLost.Value = 0;
+        ActiveTracing->PointerCaptureLost -= m_ActiveTracingPointerCaptureLostToken;
+        m_ActiveTracingPointerCaptureLostToken.Value = 0;
     }
 
     if (GraphingControl->ActiveTracing)
@@ -553,15 +608,15 @@ void CalculatorApp::GraphingCalculator::ActiveTracing_Checked(Platform::Object ^
     KeyboardShortcutManager::IgnoreEscape(false);
 
     TracePointer->Visibility = ::Visibility::Visible;
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ActiveTracingChecked);
+    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ActiveTracingChecked, GraphButtonValue::None);
 }
 
 void CalculatorApp::GraphingCalculator::ActiveTracing_Unchecked(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
 {
-    if (m_ActiveTracingPointerCaptureLost.Value != 0)
+    if (m_ActiveTracingPointerCaptureLostToken.Value != 0)
     {
-        ActiveTracing->PointerCaptureLost -= m_ActiveTracingPointerCaptureLost;
-        m_ActiveTracingPointerCaptureLost.Value = 0;
+        ActiveTracing->PointerCaptureLost -= m_ActiveTracingPointerCaptureLostToken;
+        m_ActiveTracingPointerCaptureLostToken.Value = 0;
     }
 
     if (m_activeTracingKeyUpToken.Value != 0)
@@ -572,7 +627,7 @@ void CalculatorApp::GraphingCalculator::ActiveTracing_Unchecked(Platform::Object
     KeyboardShortcutManager::HonorEscape();
 
     TracePointer->Visibility = ::Visibility::Collapsed;
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ActiveTracingUnchecked);
+    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::ActiveTracingUnchecked, GraphButtonValue::None);
 }
 
 void CalculatorApp::GraphingCalculator::ActiveTracing_KeyUp(Windows::UI::Core::CoreWindow ^ sender, Windows::UI::Core::KeyEventArgs ^ args)
@@ -587,7 +642,7 @@ void CalculatorApp::GraphingCalculator::ActiveTracing_KeyUp(Windows::UI::Core::C
 void GraphingCalculator::GraphSettingsButton_Click(Object ^ sender, RoutedEventArgs ^ e)
 {
     DisplayGraphSettings();
-    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::GraphSettings);
+    TraceLogger::GetInstance()->LogGraphButtonClicked(GraphButton::GraphSettings, GraphButtonValue::None);
 }
 
 void GraphingCalculator::DisplayGraphSettings()
@@ -598,15 +653,18 @@ void GraphingCalculator::DisplayGraphSettings()
         m_graphSettings->GraphThemeSettingChanged += ref new EventHandler<bool>(this, &GraphingCalculator::OnGraphThemeSettingChanged);
     }
 
-    m_graphSettings->IsMatchAppTheme = IsMatchAppTheme;
+    if (m_graphFlyout == nullptr)
+    {
+        m_graphFlyout = ref new Flyout();
+        m_graphFlyout->Content = m_graphSettings;
+    }
+
     m_graphSettings->SetGrapher(this->GraphingControl);
-    auto flyoutGraphSettings = ref new Flyout();
-    flyoutGraphSettings->Content = m_graphSettings;
-    flyoutGraphSettings->Closing += ref new TypedEventHandler<FlyoutBase ^, FlyoutBaseClosingEventArgs ^>(this, &GraphingCalculator::OnSettingsFlyout_Closing);
+    m_graphSettings->IsMatchAppTheme = IsMatchAppTheme;
 
     auto options = ref new FlyoutShowOptions();
     options->Placement = FlyoutPlacementMode::BottomEdgeAlignedRight;
-    flyoutGraphSettings->ShowAt(GraphSettingsButton, options);
+    m_graphFlyout->ShowAt(GraphSettingsButton, options);
 }
 
 void CalculatorApp::GraphingCalculator::AddTracePointerShadow()
@@ -619,15 +677,9 @@ void CalculatorApp::GraphingCalculator::AddTracePointerShadow()
     dropShadow->Mask = CursorPath->GetAlphaMask();
 
     auto shadowSpriteVisual = compositor->CreateSpriteVisual();
-    shadowSpriteVisual->Size = ::Numerics::float2(static_cast<float>(CursorPath->ActualWidth), static_cast<float>(CursorPath->ActualHeight));
+    shadowSpriteVisual->Size = ::Numerics::float2(18, 18);
     shadowSpriteVisual->Shadow = dropShadow;
     ::Hosting::ElementCompositionPreview::SetElementChildVisual(CursorShadow, shadowSpriteVisual);
-}
-
-void GraphingCalculator::OnSettingsFlyout_Closing(FlyoutBase ^ sender, FlyoutBaseClosingEventArgs ^ args)
-{
-    auto flyout = static_cast<Flyout ^>(sender);
-    auto graphingSetting = static_cast<GraphingSettings ^>(flyout->Content);
 }
 
 void GraphingCalculator::Canvas_SizeChanged(Object ^ /*sender*/, SizeChangedEventArgs ^ e)
@@ -670,8 +722,17 @@ void GraphingCalculator::SetDefaultFocus()
     }
 }
 
-void GraphingCalculator::GraphingControl_GraphViewChangedEvent(Object ^ sender, RoutedEventArgs ^ e)
+void GraphingCalculator::GraphingControl_GraphViewChangedEvent(Object ^ sender, GraphViewChangedReason reason)
 {
+    if (reason == GraphViewChangedReason::Manipulation)
+    {
+        IsManualAdjustment = true;
+    }
+    else
+    {
+        IsManualAdjustment = false;
+    }
+
     UpdateGraphAutomationName();
 
     auto announcement = CalculatorAnnouncement::GetGraphViewChangedAnnouncement(GraphControlAutomationName);
@@ -767,10 +828,39 @@ void GraphingCalculator::OnGraphThemeSettingChanged(Object ^ sender, bool isMatc
     IsMatchAppTheme = isMatchAppTheme;
     WeakReference weakThis(this);
     this->Dispatcher->RunAsync(CoreDispatcherPriority::Normal, ref new DispatchedHandler([weakThis]() {
-                                    auto refThis = weakThis.Resolve<GraphingCalculator>();
-                                    if (refThis != nullptr)
-                                    {
-                                        refThis->UpdateGraphTheme();
-                                    }
-                                }));
+                                   auto refThis = weakThis.Resolve<GraphingCalculator>();
+                                   if (refThis != nullptr)
+                                   {
+                                       refThis->UpdateGraphTheme();
+                                   }
+                               }));
+}
+
+void GraphingCalculator::GraphViewButton_Click(Object ^ sender, RoutedEventArgs ^ e)
+{
+    auto narratorNotifier = ref new NarratorNotifier();
+    String ^ announcementText;
+    if (IsManualAdjustment)
+    {
+        announcementText = AppResourceProvider::GetInstance()->GetResourceString(L"GraphViewManualAdjustmentAnnouncement");
+    }
+    else
+    {
+        GraphingControl->ResetGrid();
+        announcementText = AppResourceProvider::GetInstance()->GetResourceString(L"GraphViewAutomaticBestFitAnnouncement");
+    }
+
+    auto announcement = CalculatorAnnouncement::GetGraphViewBestFitChangedAnnouncement(announcementText);
+    narratorNotifier->Announce(announcement);
+
+    TraceLogger::GetInstance()->LogGraphButtonClicked(
+        GraphButton::GraphView, IsManualAdjustment ? GraphButtonValue::ManualAdjustment : GraphButtonValue::AutomaticBestFit);
+}
+
+void CalculatorApp::GraphingCalculator::OnGraphingCalculatorLoaded(Platform::Object ^ sender, Windows::UI::Xaml::RoutedEventArgs ^ e)
+{
+    this->GraphingControl->Loaded -= m_GraphingControlLoadedToken;
+
+    // The control needs to be loaded, else the control will override GridLinesColor and ignore the value passed
+    UpdateGraphTheme();
 }

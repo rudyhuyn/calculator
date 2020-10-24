@@ -135,7 +135,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -215,7 +215,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -255,7 +255,7 @@
       <DisableSpecificWarnings>4453</DisableSpecificWarnings>
       <AdditionalOptions>/bigobj /await /std:c++17 /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -379,6 +379,9 @@
     <ProjectReference Include="..\CalcManager\CalcManager.vcxproj">
       <Project>{311e866d-8b93-4609-a691-265941fee101}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\ExpressionParser\ExpressionParser.vcxproj">
+      <Project>{66b82af2-74d4-4e2d-82ce-abc9fabb8e76}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\GraphControl\GraphControl.vcxproj">
       <Project>{e727a92b-f149-492c-8117-c039a298719b}</Project>
     </ProjectReference>
@@ -405,6 +408,7 @@
   </Choose>
   <ItemGroup>
     <None Include="DataLoaders\DefaultFromToCurrency.json" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

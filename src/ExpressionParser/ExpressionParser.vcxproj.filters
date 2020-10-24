@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>493b304f-8854-4644-972a-70e8e6101448</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tga;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="BisonParserParam.cpp" />
+    <ClCompile Include="Lexer.cpp" />
+    <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="BisonGeneratedFiles\BisonParser.tab.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="BisonParserParam.h" />
+    <ClInclude Include="KeyChained.h" />
+    <ClInclude Include="Lexer.h" />
+    <ClInclude Include="Parser.h" />
+    <ClInclude Include="BisonGeneratedFiles\BisonParser.tab.hpp" />
+    <ClInclude Include="BisonGeneratedFiles\stack.hh" />
+    <ClInclude Include="ParserMode.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BisonParser.ypp" />
+  </ItemGroup>
+</Project>

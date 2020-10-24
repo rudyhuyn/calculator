@@ -18,7 +18,9 @@
             <converters:BooleanNegationConverter x:Name="BooleanNegationConverter"/>
 
             <DataTemplate x:Key="VariableDataTemplate" x:DataType="vm:VariableViewModel">
-                <Grid DataContext="{x:Bind}" Tapped="VariableAreaTapped">
+                <Grid AutomationProperties.Name="{x:Bind VariableAutomationName}"
+                      DataContext="{x:Bind}"
+                      Tapped="VariableAreaTapped">
                     <Grid.Resources>
                         <ResourceDictionary>
 
@@ -66,7 +68,6 @@
                                     <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{StaticResource SystemColorButtonFaceColor}"/>
                                     <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource SystemColorButtonFaceColor}"/>
                                     <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{StaticResource SystemColorButtonTextColor}"/>
-                                    <SolidColorBrush x:Key="VariablesBackgroundBrush" Color="{StaticResource SystemColorBackgroundColor}"/>
                                     <SolidColorBrush x:Key="SliderLegendBrush" Color="{StaticResource SystemColorWindowTextColor}"/>
                                     <Style x:Key="VariableContainerStyle" TargetType="Border">
                                         <Setter Property="Background" Value="{StaticResource SystemColorWindowColor}"/>
@@ -111,6 +112,7 @@
                                            Text="="/>
 
                                 <TextBox x:Name="ValueTextBox"
+                                         x:Uid="VariableValueTextBox"
                                          Grid.Column="2"
                                          Margin="6,0,0,0"
                                          Padding="0,10,0,0"
@@ -128,7 +130,8 @@
                                 </TextBox>
                             </Grid>
 
-                            <Slider Grid.Column="1"
+                            <Slider x:Uid="VariableValueSlider"
+                                    Grid.Column="1"
                                     Margin="8,0,8,-6"
                                     VerticalAlignment="Center"
                                     DataContext="{x:Bind}"
@@ -157,6 +160,7 @@
                                                VerticalAlignment="Center"
                                                FontSize="11"/>
                                     <TextBox x:Name="MinTextBox"
+                                             x:Uid="VariableMinTextBox"
                                              Grid.Column="1"
                                              MaxWidth="18"
                                              Padding="2,16,2,2"
@@ -178,6 +182,7 @@
                                                VerticalAlignment="Center"
                                                FontSize="11"/>
                                     <TextBox x:Name="StepTextBox"
+                                             x:Uid="VariableStepTextBox"
                                              Grid.Column="1"
                                              MaxWidth="18"
                                              Padding="2,16,2,2"
@@ -198,6 +203,7 @@
                                                VerticalAlignment="Center"
                                                FontSize="11"/>
                                     <TextBox x:Name="MaxTextBox"
+                                             x:Uid="VariableMaxTextBox"
                                              Grid.Column="1"
                                              MaxWidth="18"
                                              Padding="2,16,2,2"
@@ -209,17 +215,50 @@
                                              Text="{x:Bind Max, Mode=OneWay}"/>
                                 </Grid>
                             </Grid>
-                            <Button x:Uid="VariableAreaSettings"
-                                    Margin="0,6,0,0"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Background="Transparent"
-                                    Click="VariableAreaClicked"
-                                    Tapped="VariableAreaButtonTapped">
+
+                            <ToggleButton Name="VariableAreaSettings"
+                                          x:Uid="VariableAreaSettings"
+                                          Margin="0,6,0,0"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Click="VariableAreaClicked"
+                                          IsChecked="{x:Bind SliderSettingsVisible, Mode=OneWay}"
+                                          Tapped="VariableAreaButtonTapped">
+                                <ToggleButton.Resources>
+                                    <ResourceDictionary>
+                                        <ResourceDictionary.ThemeDictionaries>
+                                            <ResourceDictionary x:Key="Default">
+                                                <SolidColorBrush x:Key="ToggleButtonBackground" Color="Transparent"/>
+                                                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="Transparent"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="ToggleButtonBorderBrush"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="ToggleButtonForeground"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ToggleButtonBackgroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ToggleButtonBorderBrushPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="ToggleButtonForegroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="ToggleButtonBackgroundPressed"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ToggleButtonBorderBrushPressed"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="ToggleButtonForegroundPressed"/>
+                                            </ResourceDictionary>
+                                            <ResourceDictionary x:Key="Light">
+                                                <SolidColorBrush x:Key="ToggleButtonBackground" Color="Transparent"/>
+                                                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="Transparent"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="ToggleButtonBorderBrush"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundChecked" ResourceKey="ToggleButtonForeground"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPointerOver" ResourceKey="ToggleButtonBackgroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPointerOver" ResourceKey="ToggleButtonBorderBrushPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPointerOver" ResourceKey="ToggleButtonForegroundPointerOver"/>
+                                                <StaticResource x:Key="ToggleButtonBackgroundCheckedPressed" ResourceKey="ToggleButtonBackgroundPressed"/>
+                                                <StaticResource x:Key="ToggleButtonBorderBrushCheckedPressed" ResourceKey="ToggleButtonBorderBrushPressed"/>
+                                                <StaticResource x:Key="ToggleButtonForegroundCheckedPressed" ResourceKey="ToggleButtonForegroundPressed"/>
+                                            </ResourceDictionary>
+                                            <ResourceDictionary x:Key="HighContrast"/>
+                                        </ResourceDictionary.ThemeDictionaries>
+                                    </ResourceDictionary>
+                                </ToggleButton.Resources>
                                 <FontIcon FontFamily="{StaticResource CalculatorFontFamily}"
                                           FontSize="9"
                                           Glyph="{x:Bind local:EquationInputArea.GetChevronIcon(SliderSettingsVisible), Mode=OneWay}"/>
-                            </Button>
+                            </ToggleButton>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -365,6 +404,7 @@
                                             <VisualState.Setters>
                                                 <Setter Target="EquationBoxBorder.BorderBrush" Value="{ThemeResource EquationTextBoxBorderBrushFocused}"/>
                                                 <Setter Target="EquationBoxBorder.Background" Value="{ThemeResource TextBoxBackgroundThemeBrush}"/>
+                                                <Setter Target="MathRichEditBox.Foreground" Value="{ThemeResource TextControlForegroundFocused}"/>
                                             </VisualState.Setters>
                                         </VisualState>
                                         <VisualState x:Name="FocusedError">
@@ -425,12 +465,12 @@
                                                     <SolidColorBrush x:Key="EquationButtonOverlayBackgroundBrush" Color="White"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackground" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrush" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForeground" Color="White"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForeground" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{ThemeResource SystemChromeWhiteColor}"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{ThemeResource SystemChromeWhiteColor}"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="EquationButtonHideLineBackgroundBrush"/>
                                                     <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="EquationButtonHideLineBackgroundBrush"/>
@@ -448,12 +488,12 @@
                                                     <SolidColorBrush x:Key="EquationButtonOverlayBackgroundBrush" Color="Black"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackground" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrush" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForeground" Color="White"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForeground" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{ThemeResource SystemChromeWhiteColor}"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
-                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{ThemeResource SystemChromeWhiteColor}"/>
+                                                    <SolidColorBrush x:Key="ToggleButtonForegroundPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationButtonForegroundColor.Color}"/>
                                                     <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=EquationColor.Color}"/>
                                                     <StaticResource x:Key="ToggleButtonBackgroundChecked" ResourceKey="EquationButtonHideLineBackgroundBrush"/>
                                                     <StaticResource x:Key="ToggleButtonBorderBrushChecked" ResourceKey="EquationButtonHideLineBackgroundBrush"/>
@@ -610,7 +650,7 @@
                                                     <MenuFlyoutSeparator/>
                                                     <MenuFlyoutItem x:Name="FunctionAnalysisMenuItem">
                                                         <MenuFlyoutItem.Icon>
-                                                            <FontIcon FontFamily="{StaticResource CalculatorFontFamily}" Glyph="&#xE3B5;"/>
+                                                            <FontIcon FontFamily="{StaticResource CalculatorFontFamily}" Glyph="&#xE945;"/>
                                                         </MenuFlyoutItem.Icon>
                                                     </MenuFlyoutItem>
                                                     <MenuFlyoutItem x:Name="ChangeFunctionStyleMenuItem">
@@ -636,7 +676,7 @@
                                                 Style="{ThemeResource ButtonRevealStyle}"
                                                 FontFamily="{StaticResource CalculatorFontFamily}"
                                                 AutomationProperties.AccessibilityView="Raw"
-                                                Content="&#xE3B5;"
+                                                Content="&#xE945;"
                                                 IsTabStop="False"
                                                 Visibility="Collapsed">
                                             <Button.Resources>
@@ -803,9 +843,10 @@
         </ResourceDictionary>
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+        <StackPanel x:Uid="EquationInputPanel">
             <!-- This ListView and the one below should be replacted by an ItemRepeater once https://github.com/microsoft/microsoft-ui-xaml/issues/2011 is fixed. -->
             <ListView x:Name="EquationInputList"
+                      x:Uid="EquationInputList"
                       IsItemClickEnabled="False"
                       ItemsSource="{x:Bind Equations}"
                       SelectionMode="None"
@@ -840,6 +881,7 @@
                                                   DataContextChanged="EquationTextBox_DataContextChanged"
                                                   EquationButtonClicked="EquationTextBox_EquationButtonClicked"
                                                   EquationButtonContentIndex="{x:Bind FunctionLabelIndex, Mode=OneWay}"
+                                                  EquationButtonForegroundColor="{x:Bind local:EquationInputArea.GetForegroundColor(LineColor), Mode=OneWay}"
                                                   EquationColor="{x:Bind local:EquationInputArea.ToSolidColorBrush(LineColor), Mode=OneWay}"
                                                   EquationFormatRequested="EquationTextBox_EquationFormatRequested"
                                                   EquationSubmitted="EquationTextBox_Submitted"
@@ -847,6 +889,7 @@
                                                   GotFocus="EquationTextBox_GotFocus"
                                                   HasError="{x:Bind GraphEquation.HasGraphError, Mode=OneWay}"
                                                   IsAddEquationMode="{x:Bind IsLastItemInList, Mode=OneWay}"
+                                                  IsEquationLineDisabled="{x:Bind IsLineEnabled, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                                                   KeyGraphFeaturesButtonClicked="EquationTextBox_KeyGraphFeaturesButtonClicked"
                                                   Loaded="EquationTextBox_Loaded"
                                                   LostFocus="EquationTextBox_LostFocus"
@@ -868,7 +911,8 @@
                 <Rectangle Height="1"
                            Margin="12"
                            Fill="{ThemeResource DividerBrush}"/>
-                <ListView IsItemClickEnabled="False"
+                <ListView x:Uid="VariableListView"
+                          IsItemClickEnabled="False"
                           ItemTemplate="{StaticResource VariableDataTemplate}"
                           ItemsSource="{x:Bind Variables, Mode=OneWay}"
                           SelectionMode="None"

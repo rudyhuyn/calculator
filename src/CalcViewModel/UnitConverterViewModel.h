@@ -219,7 +219,7 @@ namespace CalculatorApp
 
             internal : void ResetView();
             void PopulateData();
-            NumbersAndOperatorsEnum MapCharacterToButtonId(const wchar_t ch, bool& canSendNegate);
+            UnitConversionManager::Command MapCalculatorCommandToButtonId(CalculationManager::Command command);
             void DisplayPasteError();
             void OnValueActivated(IActivatable ^ control);
             void OnPaste(Platform::String ^ stringToPaste);
@@ -342,6 +342,7 @@ namespace CalculatorApp
             Platform::String ^ m_lastAnnouncedConversionResult;
             Category ^ m_CurrentCategory;
             bool m_isCurrencyDataLoaded;
+            ExpressionParser::CalcExpressionParser ^ m_parser;
         };
 
         class UnitConverterVMCallback : public UnitConversionManager::IUnitConverterVMCallback

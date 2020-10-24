@@ -249,6 +249,10 @@
             <x:Double x:Key="CalcOperatorCaptionSize">14</x:Double>
             <x:Double x:Key="CalcOperatorTextIconCaptionSize">16</x:Double>
 
+            <!-- White and black color brushes used for the Utils::GetContrastColor -->
+            <SolidColorBrush x:Key="WhiteBrush" Color="White"/>
+            <SolidColorBrush x:Key="BlackBrush" Color="Black"/>
+
             <!-- Base style for calc buttons -->
             <Style x:Key="CalcButtonStyle" TargetType="Controls:CalculatorButton">
                 <Setter Property="MinWidth" Value="24"/>
@@ -533,7 +537,9 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Controls:CalculationResult">
-                            <Grid x:Name="Border" Background="{TemplateBinding Background}">
+                            <Grid x:Name="Border"
+                                  Background="{TemplateBinding Background}"
+                                  FlowDirection="LeftToRight">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="12"/>
                                     <ColumnDefinition/>
@@ -1766,6 +1772,7 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

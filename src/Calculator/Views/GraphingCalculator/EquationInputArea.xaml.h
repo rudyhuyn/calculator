@@ -40,6 +40,8 @@ public
         static Windows::UI::Xaml::Media::SolidColorBrush
             ^ ToSolidColorBrush(Windows::UI::Color color) { return ref new Windows::UI::Xaml::Media::SolidColorBrush(color); }
 
+        static Windows::UI::Xaml::Media::SolidColorBrush ^ GetForegroundColor(Windows::UI::Color lineColor);
+
         void FocusEquationTextBox(ViewModel::EquationViewModel ^ equation);
     private:
         void OnPropertyChanged(Platform::String ^ propertyName);
@@ -81,6 +83,7 @@ public
         Windows::UI::ViewManagement::UISettings ^ m_uiSettings;
         int m_lastLineColorIndex;
         int m_lastFunctionLabelIndex;
+        bool m_isHighContrast;
         ViewModel::EquationViewModel ^ m_equationToFocus;
         Platform::Collections::Map<Platform::String ^, CalculatorApp::DispatcherTimerDelayer ^> ^ variableSliders;
     };

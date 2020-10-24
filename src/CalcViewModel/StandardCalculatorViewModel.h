@@ -7,10 +7,10 @@
 #include "Common/CalculatorDisplay.h"
 #include "Common/EngineResourceProvider.h"
 #include "Common/CalculatorButtonUser.h"
+#include "Common/NumberBase.h"
+#include "Common/BitLength.h"
 #include "HistoryViewModel.h"
 #include "MemoryItemViewModel.h"
-#include "Common/BitLength.h"
-#include "Common/NumberBase.h"
 
 namespace CalculatorUnitTests
 {
@@ -246,8 +246,7 @@ namespace CalculatorApp
             void ResetCalcManager(bool clearMemory);
             void SendCommandToCalcManager(int command);
 
-        internal:
-            void OnPaste(Platform::String ^ pastedString);
+        internal : void OnPaste(Platform::String ^ pastedString, CalculatorApp::Common::ViewMode mode);
             void OnCopyCommand(Platform::Object ^ parameter);
             void OnPasteCommand(Platform::Object ^ parameter);
 
@@ -312,21 +311,22 @@ namespace CalculatorApp
             CalculatorDisplay m_calculatorDisplay;
             CalculatorApp::EngineResourceProvider m_resourceProvider;
             CalculationManager::CalculatorManager m_standardCalculatorManager;
-            Platform::String ^ m_expressionAutomationNameFormat;
-            Platform::String ^ m_localizedCalculationResultAutomationFormat;
-            Platform::String ^ m_localizedCalculationResultDecimalAutomationFormat;
-            Platform::String ^ m_localizedHexaDecimalAutomationFormat;
-            Platform::String ^ m_localizedDecimalAutomationFormat;
-            Platform::String ^ m_localizedOctalAutomationFormat;
-            Platform::String ^ m_localizedBinaryAutomationFormat;
-            Platform::String ^ m_localizedMaxDigitsReachedAutomationFormat;
-            Platform::String ^ m_localizedButtonPressFeedbackAutomationFormat;
-            Platform::String ^ m_localizedMemorySavedAutomationFormat;
-            Platform::String ^ m_localizedMemoryItemChangedAutomationFormat;
-            Platform::String ^ m_localizedMemoryItemClearedAutomationFormat;
-            Platform::String ^ m_localizedMemoryCleared;
-            Platform::String ^ m_localizedOpenParenthesisCountChangedAutomationFormat;
-            Platform::String ^ m_localizedNoRightParenthesisAddedFormat;
+            ExpressionParser::CalcExpressionParser ^ m_parser;
+            Platform::String^ m_expressionAutomationNameFormat;
+            Platform::String^ m_localizedCalculationResultAutomationFormat;
+            Platform::String^ m_localizedCalculationResultDecimalAutomationFormat;
+            Platform::String^ m_localizedHexaDecimalAutomationFormat;
+            Platform::String^ m_localizedDecimalAutomationFormat;
+            Platform::String^ m_localizedOctalAutomationFormat;
+            Platform::String^ m_localizedBinaryAutomationFormat;
+            Platform::String^ m_localizedMaxDigitsReachedAutomationFormat;
+            Platform::String^ m_localizedButtonPressFeedbackAutomationFormat;
+            Platform::String^ m_localizedMemorySavedAutomationFormat;
+            Platform::String^ m_localizedMemoryItemChangedAutomationFormat;
+            Platform::String^ m_localizedMemoryItemClearedAutomationFormat;
+            Platform::String^ m_localizedMemoryCleared;
+            Platform::String^ m_localizedOpenParenthesisCountChangedAutomationFormat;
+            Platform::String^ m_localizedNoRightParenthesisAddedFormat;
 
             bool m_isOperandEnabled;
             bool m_isEditingEnabled;
@@ -341,9 +341,9 @@ namespace CalculatorApp
             Platform::String ^ m_selectedExpressionLastData;
             Common::DisplayExpressionToken ^ m_selectedExpressionToken;
 
-            Platform::String ^ LocalizeDisplayValue(_In_ std::wstring const& displayValue, _In_ bool isError);
+            Platform::String ^ LocalizeDisplayValue(_In_ std::wstring const& displayValue);
             Platform::String
-                ^ CalculateNarratorDisplayValue(_In_ std::wstring const& displayValue, _In_ Platform::String ^ localizedDisplayValue, _In_ bool isError);
+                ^ CalculateNarratorDisplayValue(_In_ std::wstring const& displayValue, _In_ Platform::String ^ localizedDisplayValue);
             CalculatorApp::Common::Automation::NarratorAnnouncement ^ GetDisplayUpdatedNarratorAnnouncement();
             Platform::String ^ GetCalculatorExpressionAutomationName();
             Platform::String ^ GetNarratorStringReadRawNumbers(_In_ Platform::String ^ localizedDisplayValue);
